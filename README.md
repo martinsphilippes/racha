@@ -49,28 +49,30 @@ npm run test:e2e     # fluxo completo gestor + atleta no navegador (precisa dos 
 
 ## Colocando em produção
 
-### 1. Firebase
+### 1. Firebase (um comando)
 
-1. Crie um projeto no [console do Firebase](https://console.firebase.google.com).
-2. **Authentication → Método de login → E-mail/senha:** ativar.
-3. **Firestore Database:** criar (modo produção; as regras serão publicadas a seguir). Região sugerida: `southamerica-east1`.
-4. **Configurações do projeto → Seus apps → Web:** registre o app e copie as credenciais para o `.env`
-   (`VITE_FIREBASE_*`) com `VITE_USE_EMULATORS=false`.
-5. Publique regras e índices:
+```bash
+npx firebase login          # uma vez: abre o navegador para autorizar sua conta Google
+npm run setup:firebase      # cria projeto, Firestore, e-mail/senha, app Web, regras e índices
+git add src/firebase.config.json .firebaserc
+git commit -m "Configura Firebase" && git push
+```
 
-   ```bash
-   npx firebase login
-   npx firebase use --add        # escolha o projeto criado (atualiza .firebaserc)
-   npm run deploy:rules          # firestore.rules + firestore.indexes.json
-   ```
+O script `scripts/setup-firebase.mjs` é idempotente (pode rodar de novo) e aceita
+`--project <id>`, `--region <região>` e `--domains a.vercel.app,b.com`.
+Ele grava a **configuração pública** do Web SDK em `src/firebase.config.json`, que é versionada de propósito:
+não é segredo (é entregue ao navegador de qualquer forma) e a segurança vem da autenticação + regras do Firestore.
+Variáveis `VITE_FIREBASE_*` no ambiente, quando existirem, têm prioridade sobre o arquivo.
 
-   O índice de grupo de coleção em `members.uid` (consulta "meus grupos") é obrigatório em produção.
+Se preferir fazer manualmente no console: criar projeto → Authentication → E-mail/senha → Firestore (produção,
+`southamerica-east1`) → app Web → colar a configuração no JSON → `npm run deploy:rules`.
+O índice de grupo de coleção em `members.uid` (consulta "meus grupos") é obrigatório em produção.
 
 ### 2. Vercel
 
-1. Importe o repositório na Vercel (framework Vite é detectado pelo `vercel.json`).
-2. Em **Settings → Environment Variables**, cadastre as mesmas variáveis `VITE_FIREBASE_*` e `VITE_USE_EMULATORS=false`.
-3. Em **Authentication → Configurações → Domínios autorizados** no Firebase, adicione o domínio da Vercel.
+O projeto `racha` na Vercel está ligado a este repositório: cada push na branch de produção gera um deploy
+automático com HTTPS. `vercel.json` cuida das rotas do SPA e do cache do service worker.
+Nenhuma variável de ambiente é necessária quando `src/firebase.config.json` está preenchido.
 
 O app é instalável no celular ("Adicionar à tela inicial"); atualizações do service worker são automáticas.
 

@@ -6,16 +6,20 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore'
+// Configuração pública do Firebase Web SDK (gerada por `npm run setup:firebase`).
+// Não é segredo: a segurança vem da autenticação + regras do Firestore.
+import committedConfig from '@/firebase.config.json'
 
 const useEmulators = import.meta.env.VITE_USE_EMULATORS === 'true'
 
+// Prioridade: variáveis de ambiente (Vercel/.env) → arquivo versionado → emulador.
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (useEmulators ? 'demo-key' : ''),
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || (useEmulators ? 'demo-racha' : ''),
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || committedConfig.apiKey || (useEmulators ? 'demo-key' : ''),
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || committedConfig.authDomain || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || committedConfig.projectId || (useEmulators ? 'demo-racha' : ''),
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || committedConfig.storageBucket || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || committedConfig.messagingSenderId || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || committedConfig.appId || '',
 }
 
 export const firebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId)

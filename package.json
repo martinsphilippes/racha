@@ -12,7 +12,8 @@
     "emulators": "firebase emulators:start --only auth,firestore --project demo-racha",
     "test:rules": "firebase emulators:exec --only firestore --project demo-racha \"vitest run --config vitest.rules.config.ts\"",
     "test:e2e": "playwright test",
-    "deploy:rules": "firebase deploy --only firestore"
+    "deploy:rules": "firebase deploy --only firestore",
+    "setup:firebase": "node scripts/setup-firebase.mjs"
   },
   "dependencies": {
     "firebase": "^12.5.0",
