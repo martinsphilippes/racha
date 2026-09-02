@@ -8,6 +8,7 @@ import { useCollection, useDocument } from './useFirestore'
 interface GroupContextValue {
   memberships: Member[]
   membershipsLoading: boolean
+  membershipsError: Error | null
   groupId: string | null
   group: Group | null
   groupLoading: boolean
@@ -26,7 +27,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
   // "De quais grupos eu participo?" — consulta em grupo de coleção filtrada pelo meu uid.
   // serverOnly: só considera a associação depois que o servidor confirmou a escrita,
   // senão os listeners do grupo seriam abertos antes de a permissão existir.
-  const { data: memberships, loading: membershipsLoading } = useCollection<Member>(
+  const { data: memberships, loading: membershipsLoading, error: membershipsError } = useCollection<Member>(
     () => (uid ? query(collectionGroup(db, 'members'), where('uid', '==', uid)) : null),
     [uid],
     { serverOnly: true },
@@ -59,6 +60,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       value={{
         memberships,
         membershipsLoading,
+        membershipsError,
         groupId,
         group,
         groupLoading: membershipsLoading || (Boolean(groupId) && groupLoading),

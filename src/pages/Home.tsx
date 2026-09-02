@@ -3,11 +3,11 @@ import { useGroup } from '@/hooks/useGroupContext'
 import { useAnnouncements, useGroupNames, useMatchPlayers, useMembers, useNextMatch, useUpcomingMatches } from '@/hooks/useGroupData'
 import { useAutoGenerateMatches } from '@/hooks/useAutoGenerateMatches'
 import { formatDate, formatTimeRange, WEEKDAYS_SHORT, parseDate } from '@/lib/format'
-import { Card, EmptyState, LinkButton, SectionTitle, Spinner } from '@/components/ui'
+import { Button, Card, EmptyState, LinkButton, SectionTitle, Spinner } from '@/components/ui'
 import MatchView, { AnnouncementCards } from '@/components/MatchView'
 
 export default function Home() {
-  const { memberships, membershipsLoading, group, groupId, groupLoading, isManager, setGroupId } = useGroup()
+  const { memberships, membershipsLoading, membershipsError, group, groupId, groupLoading, isManager, setGroupId } = useGroup()
   useAutoGenerateMatches()
   const { match, loading: matchLoading } = useNextMatch(groupId)
   const { data: upcoming } = useUpcomingMatches(groupId)
@@ -17,6 +17,8 @@ export default function Home() {
   const groupNames = useGroupNames(memberships.map((m) => m.groupId))
 
   if (membershipsLoading) return <Spinner />
+
+  if (membershipsError) return <SetupError error={membershipsError} />
 
   if (memberships.length === 0) {
     return (
@@ -81,5 +83,35 @@ export default function Home() {
         </section>
       )}
     </div>
+  )
+}
+
+/**
+ * Erro de configuração do Firestore (ex.: índice de grupo de coleção ausente).
+ * O Firestore devolve na mensagem o link exato para criar o índice; mostramos na tela
+ * para o gestor resolver sem precisar abrir o console do navegador.
+ */
+function SetupError({ error }: { error: Error }) {
+  const link = error.message.match(/https:\/\/\S+/)?.[0]
+  const isIndex = /index/i.test(error.message)
+  return (
+    <Card className="space-y-3">
+      <h2 className="text-lg font-extrabold">{isIndex ? 'Falta criar um índice no Firestore' : 'Não foi possível carregar seus grupos'}</h2>
+      {isIndex ? (
+        <p className="text-sm text-neutral-700">
+          O Firestore precisa de um índice para a consulta "meus grupos" (grupo de coleções <code>members</code>, campo <code>uid</code>).
+          {link ? ' Toque no botão abaixo, confirme a criação no console do Firebase e aguarde alguns minutos.' : ' Crie-o no console do Firebase em Firestore → Índices → Campo único.'}
+        </p>
+      ) : (
+        <p className="text-sm text-neutral-700">Verifique as regras de segurança e a configuração do Firebase.</p>
+      )}
+      {link && (
+        <a href={link} target="_blank" rel="noreferrer" className="block rounded-xl bg-green-600 px-4 py-3 text-center font-semibold text-white">
+          Criar índice no Firebase
+        </a>
+      )}
+      <details className="text-xs text-neutral-500"><summary>Detalhes técnicos</summary><pre className="mt-1 whitespace-pre-wrap break-all">{error.message}</pre></details>
+      <Button variant="outline" className="w-full" onClick={() => location.reload()}>Tentar novamente</Button>
+    </Card>
   )
 }
