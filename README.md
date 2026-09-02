@@ -70,8 +70,8 @@ O índice de grupo de coleção em `members.uid` (consulta "meus grupos") é obr
 
 ### 2. Vercel
 
-O projeto `racha` na Vercel está ligado a este repositório: cada push na branch de produção gera um deploy
-automático com HTTPS. `vercel.json` cuida das rotas do SPA e do cache do service worker.
+Produção: **https://racha-silk-zeta.vercel.app** (projeto `racha` na Vercel, ligado a este repositório).
+Cada push na branch `main` gera um deploy de produção automático com HTTPS; outras branches geram previews. `vercel.json` cuida das rotas do SPA e do cache do service worker.
 Nenhuma variável de ambiente é necessária quando `src/firebase.config.json` está preenchido.
 
 O app é instalável no celular ("Adicionar à tela inicial"); atualizações do service worker são automáticas.
