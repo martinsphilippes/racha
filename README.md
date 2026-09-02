@@ -1,4 +1,4 @@
-# Racha ⚽
+# Racha 10 ⚽
 
 PWA para organizar o futebol semanal (futsal e society): presença por partida, posição (linha/goleiro),
 rateio automático com isenção de goleiros, PIX, controle de pagamento, sorteio de times e comunicados.

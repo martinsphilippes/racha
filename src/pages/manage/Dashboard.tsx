@@ -32,7 +32,7 @@ export default function Dashboard() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="font-extrabold">{formatDateLong(match.date)}</div>
-                <div className="text-sm text-neutral-600">{formatTimeRange(match.startTime, match.durationMinutes)} · {match.venueName}{match.courtName ? ` · ${match.courtName}` : ''}</div>
+                <div className="text-sm text-muted">{formatTimeRange(match.startTime, match.durationMinutes)} · {match.venueName}{match.courtName ? ` · ${match.courtName}` : ''}</div>
               </div>
               <StatusPill status={effectiveStatus(match)} />
             </div>
@@ -72,13 +72,13 @@ export default function Dashboard() {
 
       <section>
         <SectionTitle>Partidas futuras</SectionTitle>
-        <Card className="divide-y divide-neutral-100 p-0">
-          {upcoming.length === 0 && <p className="p-4 text-sm text-neutral-500">Nenhuma partida gerada.</p>}
+        <Card className="divide-y divide-line/70 p-0">
+          {upcoming.length === 0 && <p className="p-4 text-sm text-muted">Nenhuma partida gerada.</p>}
           {upcoming.map((m) => (
             <Link key={m.id} to={`/manage/match/${m.id}`} className="flex items-center justify-between px-4 py-3">
               <div>
                 <div className="font-semibold">{formatDate(m.date)} · {formatTimeRange(m.startTime, m.durationMinutes)}</div>
-                <div className="text-xs text-neutral-500">{m.venueName}{m.courtName ? ` · ${m.courtName}` : ''}{m.scheduleId ? '' : ' · avulsa'}</div>
+                <div className="text-xs text-muted">{m.venueName}{m.courtName ? ` · ${m.courtName}` : ''}{m.scheduleId ? '' : ' · avulsa'}</div>
               </div>
               <StatusPill status={effectiveStatus(m)} />
             </Link>
@@ -91,7 +91,7 @@ export default function Dashboard() {
 
 function Action({ to, icon, label }: { to: string; icon: string; label: string }) {
   return (
-    <Link to={to} className="flex items-center gap-2 rounded-2xl bg-white px-3 py-3 text-sm font-semibold shadow-sm active:bg-neutral-50">
+    <Link to={to} className="flex items-center gap-2 rounded-2xl bg-surface px-3 py-3 text-sm font-semibold shadow-md ring-1 ring-line/60 active:bg-surface-2">
       <span className="text-xl">{icon}</span>{label}
     </Link>
   )

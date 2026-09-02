@@ -41,8 +41,8 @@ export default function Venues() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="text-lg font-extrabold">{v.name}</div>
-                {v.address && <div className="text-sm text-neutral-600">{v.address}</div>}
-                {v.notes && <div className="text-xs text-neutral-500">{v.notes}</div>}
+                {v.address && <div className="text-sm text-muted">{v.address}</div>}
+                {v.notes && <div className="text-xs text-muted">{v.notes}</div>}
               </div>
               <div className="flex gap-1">
                 <Button size="sm" variant="ghost" onClick={() => setEditingVenue(v)}>Editar</Button>
@@ -51,12 +51,12 @@ export default function Venues() {
             </div>
             <div>
               <SectionTitle right={<Button size="sm" variant="outline" onClick={() => setEditingCourt({ venueId: v.id })}>+ Quadra</Button>}>Quadras</SectionTitle>
-              <ul className="divide-y divide-neutral-100">
+              <ul className="divide-y divide-line/70">
                 {courts.filter((c) => c.venueId === v.id).map((c) => (
                   <li key={c.id} className="flex items-center justify-between py-2">
                     <div>
                       <div className="font-semibold">{c.name} <Pill className="ml-1">{SPORTS.find((s) => s.value === c.sport)?.label}</Pill></div>
-                      <div className="text-sm text-neutral-600">{formatMoney(c.hourlyRate)} / hora{c.notes ? ` · ${c.notes}` : ''}</div>
+                      <div className="text-sm text-muted">{formatMoney(c.hourlyRate)} / hora{c.notes ? ` · ${c.notes}` : ''}</div>
                     </div>
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => setEditingCourt(c)}>Editar</Button>
@@ -64,7 +64,7 @@ export default function Venues() {
                     </div>
                   </li>
                 ))}
-                {courts.filter((c) => c.venueId === v.id).length === 0 && <li className="py-2 text-sm text-neutral-500">Nenhuma quadra. Adicione uma com o valor por hora.</li>}
+                {courts.filter((c) => c.venueId === v.id).length === 0 && <li className="py-2 text-sm text-muted">Nenhuma quadra. Adicione uma com o valor por hora.</li>}
               </ul>
             </div>
           </Card>
@@ -83,7 +83,7 @@ function VenueForm({ groupId, venue, onClose }: { groupId: string; venue: Partia
     try { await saveVenue(groupId, { ...venue, ...form }); toast('Local salvo'); onClose() } catch (err) { toast(errorMessage(err), 'error') } finally { setBusy(false) }
   }
   return (
-    <Card className="border-2 border-green-600">
+    <Card className="border-2 border-flame-500">
       <form onSubmit={submit} className="space-y-3">
         <h3 className="font-bold">{venue.id ? 'Editar local' : 'Novo local'}</h3>
         <Field label="Nome do local"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex.: Arena Ituiutaba" /></Field>
@@ -107,7 +107,7 @@ function CourtForm({ groupId, court, defaultSport, onClose }: { groupId: string;
     try { await saveCourt(groupId, { ...court, venueId: court.venueId!, ...form }); toast('Quadra salva'); onClose() } catch (err) { toast(errorMessage(err), 'error') } finally { setBusy(false) }
   }
   return (
-    <Card className="border-2 border-green-600">
+    <Card className="border-2 border-flame-500">
       <form onSubmit={submit} className="space-y-3">
         <h3 className="font-bold">{court.id ? 'Editar quadra' : 'Nova quadra'}</h3>
         <Field label="Nome da quadra"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex.: Society 1" /></Field>

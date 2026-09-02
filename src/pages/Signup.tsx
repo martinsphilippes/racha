@@ -35,8 +35,8 @@ export default function Signup() {
         <ErrorText>{error}</ErrorText>
         <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? 'Criando…' : 'CRIAR CONTA'}</Button>
       </form>
-      <p className="mt-6 text-center text-sm text-neutral-600">
-        Já tem conta? <Link to="/login" className="font-semibold text-green-700">Entrar</Link>
+      <p className="mt-6 text-center text-sm text-muted">
+        Já tem conta? <Link to="/login" className="font-semibold text-gold-400">Entrar</Link>
       </p>
     </AuthLayout>
   )

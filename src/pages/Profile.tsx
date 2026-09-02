@@ -40,13 +40,13 @@ export default function Profile() {
       <section>
         <SectionTitle>Meus grupos</SectionTitle>
         <Card className="space-y-2">
-          {memberships.length === 0 && <p className="text-sm text-neutral-600">Você ainda não participa de nenhum grupo.</p>}
+          {memberships.length === 0 && <p className="text-sm text-muted">Você ainda não participa de nenhum grupo.</p>}
           {memberships.map((m) => (
             <button
               key={m.groupId}
               type="button"
               onClick={() => { setGroupId(m.groupId); navigate('/') }}
-              className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left ${m.groupId === groupId ? 'border-green-600 bg-green-50' : 'border-neutral-200'}`}
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left ${m.groupId === groupId ? 'border-flame-500 bg-flame-500/10' : 'border-line'}`}
             >
               <span className="font-semibold">{groupNames[m.groupId] ?? 'Grupo'}</span>
               <Pill tone={m.role === 'manager' ? 'blue' : 'neutral'}>{m.role === 'manager' ? 'Gestor' : 'Atleta'}</Pill>
@@ -64,7 +64,7 @@ export default function Profile() {
         <Card>
           <form onSubmit={submit} className="space-y-4">
             <Field label="Nome completo"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
-            <Field label="E-mail"><input value={user?.email ?? ''} disabled className="bg-neutral-100" /></Field>
+            <Field label="E-mail"><input value={user?.email ?? ''} disabled className="bg-surface-2" /></Field>
             <Field label="Telefone"><input type="tel" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
             <Field label="Endereço"><input required value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field>
             <ErrorText>{error}</ErrorText>
@@ -74,7 +74,7 @@ export default function Profile() {
       </section>
 
       <Button variant="outline" className="w-full" onClick={() => logout().then(() => navigate('/login'))}>Sair da conta</Button>
-      <p className="text-center text-xs text-neutral-400">Racha · v{__APP_VERSION__}</p>
+      <p className="text-center text-xs text-muted/70">Racha 10 · v{__APP_VERSION__}</p>
     </div>
   )
 }

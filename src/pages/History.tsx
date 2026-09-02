@@ -36,9 +36,9 @@ function HistoryItem({ match, groupId, groupName }: { match: Match; groupId: str
       <Card className="space-y-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <div className="text-xs font-semibold uppercase text-neutral-500">{groupName}</div>
+            <div className="text-xs font-semibold uppercase text-muted">{groupName}</div>
             <div className="font-bold">{formatDateLong(match.date)}</div>
-            <div className="text-sm text-neutral-600">{formatTimeRange(match.startTime, match.durationMinutes)} · {match.venueName}{match.courtName ? ` · ${match.courtName}` : ''}</div>
+            <div className="text-sm text-muted">{formatTimeRange(match.startTime, match.durationMinutes)} · {match.venueName}{match.courtName ? ` · ${match.courtName}` : ''}</div>
           </div>
           <StatusPill status={status} />
         </div>

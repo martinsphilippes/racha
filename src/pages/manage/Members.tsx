@@ -43,18 +43,18 @@ export default function Members() {
       <section>
         <SectionTitle>Convite</SectionTitle>
         <Card className="space-y-3 text-center">
-          <p className="text-sm text-neutral-600">Compartilhe o código com os atletas. Eles entram em "Tenho um código de convite".</p>
+          <p className="text-sm text-muted">Compartilhe o código com os atletas. Eles entram em "Tenho um código de convite".</p>
           <div className="text-4xl font-extrabold tracking-[0.3em]" data-testid="invite-code">{group.inviteCode}</div>
           <div className="grid grid-cols-2 gap-2">
             <Button variant="secondary" onClick={share}>Compartilhar</Button>
             <Button variant="outline" onClick={async () => toast((await copyText(group.inviteCode)) ? 'Código copiado!' : 'Erro ao copiar')}>Copiar código</Button>
           </div>
-          <button type="button" onClick={regenerate} className="text-xs text-neutral-500 underline">Gerar novo código</button>
+          <button type="button" onClick={regenerate} className="text-xs text-muted underline">Gerar novo código</button>
         </Card>
       </section>
       <section>
         <SectionTitle right={<Pill>{members.length}</Pill>}>Participantes</SectionTitle>
-        <Card className="divide-y divide-neutral-100 p-0">
+        <Card className="divide-y divide-line/70 p-0">
           {loading && <Spinner />}
           {members.map((m) => (
             <div key={m.uid} className="flex items-center justify-between gap-2 px-4 py-3">

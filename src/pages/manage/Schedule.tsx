@@ -47,9 +47,9 @@ export default function SchedulePage() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="text-lg font-extrabold">Toda {WEEKDAYS[s.weekday].toLowerCase()}</div>
-                <div className="text-sm text-neutral-700">{formatTimeRange(s.startTime, s.durationMinutes)} · {formatDuration(s.durationMinutes)}</div>
-                <div className="text-sm text-neutral-600">{venue?.name ?? '—'}{court ? ` · ${court.name}` : ''}</div>
-                {court && <div className="text-xs text-neutral-500">{formatMoney(court.hourlyRate)}/h → {formatMoney((court.hourlyRate * s.durationMinutes) / 60)} por partida</div>}
+                <div className="text-sm text-slate-200">{formatTimeRange(s.startTime, s.durationMinutes)} · {formatDuration(s.durationMinutes)}</div>
+                <div className="text-sm text-muted">{venue?.name ?? '—'}{court ? ` · ${court.name}` : ''}</div>
+                {court && <div className="text-xs text-muted">{formatMoney(court.hourlyRate)}/h → {formatMoney((court.hourlyRate * s.durationMinutes) / 60)} por partida</div>}
               </div>
               <Pill tone={s.active ? 'green' : 'neutral'}>{s.active ? 'Ativa' : 'Pausada'}</Pill>
             </div>
@@ -58,7 +58,7 @@ export default function SchedulePage() {
               <Button size="sm" variant="outline" onClick={() => toggle(s)}>{s.active ? 'Pausar' : 'Reativar'}</Button>
               <Button size="sm" variant="secondary" onClick={() => generate(s)} disabled={!s.active}>Gerar partidas</Button>
             </div>
-            <p className="text-xs text-neutral-500">Mantém as próximas {s.weeksAhead} semanas geradas automaticamente. Cada data é uma partida independente.</p>
+            <p className="text-xs text-muted">Mantém as próximas {s.weeksAhead} semanas geradas automaticamente. Cada data é uma partida independente.</p>
           </Card>
         )
       })}
@@ -101,7 +101,7 @@ function ScheduleForm({ schedule, onClose }: { schedule: Partial<Schedule>; onCl
   }
 
   return (
-    <Card className="border-2 border-green-600">
+    <Card className="border-2 border-flame-500">
       <form onSubmit={submit} className="space-y-3">
         <h3 className="font-bold">{schedule.id ? 'Editar agenda' : 'Nova agenda semanal'}</h3>
         <Field label="Dia da semana">

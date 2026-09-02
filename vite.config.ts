@@ -13,18 +13,18 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png'],
+      includeAssets: ['icons/favicon-64.png', 'icons/apple-touch-icon.png', 'brand/logo.webp'],
       manifest: {
-        name: 'Racha — organize seu futebol',
-        short_name: 'Racha',
+        name: 'Racha 10 — organize seu futebol',
+        short_name: 'Racha 10',
         description: 'Organize os jogos semanais de futsal e society: presença, rateio, PIX e times.',
         lang: 'pt-BR',
         start_url: '/',
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#0b1b13',
-        theme_color: '#16a34a',
+        background_color: '#0a1440',
+        theme_color: '#0a1440',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -32,7 +32,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2}'],
         navigateFallback: '/index.html',
         // Nunca cacheia chamadas ao Firebase: dados sempre em tempo real.
         navigateFallbackDenylist: [/^\/__\//],

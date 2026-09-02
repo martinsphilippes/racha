@@ -30,8 +30,8 @@ export default function Login() {
         <ErrorText>{error}</ErrorText>
         <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? 'Entrando…' : 'ENTRAR'}</Button>
       </form>
-      <p className="mt-6 text-center text-sm text-neutral-600">
-        Ainda não tem conta? <Link to="/signup" className="font-semibold text-green-700">Criar conta</Link>
+      <p className="mt-6 text-center text-sm text-muted">
+        Ainda não tem conta? <Link to="/signup" className="font-semibold text-gold-400">Criar conta</Link>
       </p>
     </AuthLayout>
   )
@@ -40,12 +40,11 @@ export default function Login() {
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-8">
-      <div className="mb-8 flex flex-col items-center gap-2 text-center">
-        <img src="/icons/icon.svg" alt="" className="h-16 w-16" />
-        <h1 className="text-3xl font-extrabold tracking-tight">Racha</h1>
-        {subtitle && <p className="text-sm text-neutral-600">{subtitle}</p>}
+      <div className="mb-6 flex flex-col items-center gap-2 text-center">
+        <img src="/brand/logo.webp" alt="Racha 10" className="w-72 max-w-full rounded-2xl" />
+        {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
       </div>
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
+      <div className="rounded-2xl bg-surface p-5 shadow-md ring-1 ring-line/60">
         <h2 className="mb-4 text-xl font-bold">{title}</h2>
         {children}
       </div>

@@ -24,9 +24,9 @@ export default function Home() {
     return (
       <div className="space-y-4 pt-6">
         <div className="text-center">
-          <img src="/icons/icon.svg" alt="" className="mx-auto mb-2 h-16 w-16" />
+          <img src="/brand/logo.webp" alt="Racha 10" className="mx-auto mb-2 w-64 max-w-full rounded-2xl" />
           <h1 className="text-2xl font-extrabold">Bem-vindo ao Racha!</h1>
-          <p className="mt-1 text-sm text-neutral-600">Entre no grupo do seu futebol ou crie um novo.</p>
+          <p className="mt-1 text-sm text-muted">Entre no grupo do seu futebol ou crie um novo.</p>
         </div>
         <Card className="space-y-3">
           <LinkButton to="/groups/join" variant="primary" className="w-full py-4 text-lg">TENHO UM CÓDIGO DE CONVITE</LinkButton>
@@ -67,16 +67,16 @@ export default function Home() {
           <SectionTitle>Próximas partidas</SectionTitle>
           <div className="space-y-2">
             {others.map((m) => (
-              <Link key={m.id} to={`/match/${m.id}`} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
-                <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-neutral-100 leading-none">
-                  <span className="text-[10px] font-bold uppercase text-neutral-500">{WEEKDAYS_SHORT[parseDate(m.date).getDay()]}</span>
+              <Link key={m.id} to={`/match/${m.id}`} className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 shadow-md ring-1 ring-line/60">
+                <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-surface-2 leading-none">
+                  <span className="text-[10px] font-bold uppercase text-muted">{WEEKDAYS_SHORT[parseDate(m.date).getDay()]}</span>
                   <span className="text-lg font-extrabold">{formatDate(m.date).slice(0, 2)}</span>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold">{formatDate(m.date)} · {formatTimeRange(m.startTime, m.durationMinutes)}</div>
-                  <div className="truncate text-xs text-neutral-500">{m.venueName}{m.courtName ? ` · ${m.courtName}` : ''}</div>
+                  <div className="truncate text-xs text-muted">{m.venueName}{m.courtName ? ` · ${m.courtName}` : ''}</div>
                 </div>
-                <span className="text-neutral-400">›</span>
+                <span className="text-muted/70">›</span>
               </Link>
             ))}
           </div>
@@ -98,19 +98,19 @@ function SetupError({ error }: { error: Error }) {
     <Card className="space-y-3">
       <h2 className="text-lg font-extrabold">{isIndex ? 'Falta criar um índice no Firestore' : 'Não foi possível carregar seus grupos'}</h2>
       {isIndex ? (
-        <p className="text-sm text-neutral-700">
+        <p className="text-sm text-slate-200">
           O Firestore precisa de um índice para a consulta "meus grupos" (grupo de coleções <code>members</code>, campo <code>uid</code>).
           {link ? ' Toque no botão abaixo, confirme a criação no console do Firebase e aguarde alguns minutos.' : ' Crie-o no console do Firebase em Firestore → Índices → Campo único.'}
         </p>
       ) : (
-        <p className="text-sm text-neutral-700">Verifique as regras de segurança e a configuração do Firebase.</p>
+        <p className="text-sm text-slate-200">Verifique as regras de segurança e a configuração do Firebase.</p>
       )}
       {link && (
-        <a href={link} target="_blank" rel="noreferrer" className="block rounded-xl bg-green-600 px-4 py-3 text-center font-semibold text-white">
+        <a href={link} target="_blank" rel="noreferrer" className="block rounded-xl bg-flame-500 px-4 py-3 text-center font-semibold text-white">
           Criar índice no Firebase
         </a>
       )}
-      <details className="text-xs text-neutral-500"><summary>Detalhes técnicos</summary><pre className="mt-1 whitespace-pre-wrap break-all">{error.message}</pre></details>
+      <details className="text-xs text-muted"><summary>Detalhes técnicos</summary><pre className="mt-1 whitespace-pre-wrap break-all">{error.message}</pre></details>
       <Button variant="outline" className="w-full" onClick={() => location.reload()}>Tentar novamente</Button>
     </Card>
   )

@@ -3,11 +3,11 @@ import { Link } from 'react-router'
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline'
 const variants: Record<Variant, string> = {
-  primary: 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800 disabled:bg-green-600/50',
-  secondary: 'bg-neutral-900 text-white hover:bg-neutral-800 active:bg-black disabled:bg-neutral-900/50',
+  primary: 'bg-flame-500 text-white hover:bg-flame-600 active:bg-flame-600 disabled:bg-flame-500/50 shadow-lg shadow-flame-500/25',
+  secondary: 'bg-royal-500 text-white hover:bg-royal-600 active:bg-royal-600 disabled:bg-royal-500/50',
   danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-red-600/50',
-  ghost: 'bg-transparent text-neutral-700 hover:bg-neutral-200 active:bg-neutral-300',
-  outline: 'bg-white text-neutral-900 border border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 disabled:opacity-50',
+  ghost: 'bg-transparent text-muted hover:bg-surface-2 active:bg-line',
+  outline: 'bg-surface-2 text-ink border border-line hover:bg-navy-700 active:bg-navy-700 disabled:opacity-50',
 }
 
 export function Button({
@@ -35,14 +35,14 @@ export function LinkButton({ to, variant = 'outline', className = '', children }
 
 export function Card({ children, className = '', ...props }: { children: ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
   // Só aplica o fundo branco padrão se quem usa não definiu outro fundo (evita conflito de classes).
-  const bg = /(^|\s)bg-/.test(className) ? '' : 'bg-white'
+  const bg = /(^|\s)bg-/.test(className) ? '' : 'bg-surface'
   return <div className={`rounded-2xl ${bg} p-4 shadow-sm ${className}`} {...props}>{children}</div>
 }
 
 export function SectionTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
     <div className="mb-2 flex items-center justify-between">
-      <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-500">{children}</h2>
+      <h2 className="text-xs font-bold uppercase tracking-wider text-muted">{children}</h2>
       {right}
     </div>
   )
@@ -50,11 +50,11 @@ export function SectionTitle({ children, right }: { children: ReactNode; right?:
 
 export function Pill({ children, tone = 'neutral', className = '' }: { children: ReactNode; tone?: 'neutral' | 'green' | 'red' | 'amber' | 'blue'; className?: string }) {
   const tones = {
-    neutral: 'bg-neutral-200 text-neutral-700',
-    green: 'bg-green-100 text-green-800',
-    red: 'bg-red-100 text-red-800',
-    amber: 'bg-amber-100 text-amber-800',
-    blue: 'bg-blue-100 text-blue-800',
+    neutral: 'bg-surface-2 text-slate-200 ring-1 ring-line',
+    green: 'bg-green-500/20 text-green-300',
+    red: 'bg-red-500/20 text-red-300',
+    amber: 'bg-gold-400/20 text-gold-300',
+    blue: 'bg-sky-glow/20 text-sky-glow',
   }
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${tones[tone]} ${className}`}>{children}</span>
 }
@@ -63,17 +63,17 @@ export function Pill({ children, tone = 'neutral', className = '' }: { children:
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-neutral-700">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-slate-200">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-neutral-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
     </label>
   )
 }
 
 export function Spinner({ label = 'Carregando…' }: { label?: string }) {
   return (
-    <div className="flex items-center justify-center gap-3 py-10 text-neutral-500" role="status">
-      <span className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-green-600" />
+    <div className="flex items-center justify-center gap-3 py-10 text-muted" role="status">
+      <span className="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-flame-500" />
       <span className="text-sm">{label}</span>
     </div>
   )
@@ -84,7 +84,7 @@ export function EmptyState({ icon, title, text, action }: { icon?: string; title
     <Card className="flex flex-col items-center gap-2 py-8 text-center">
       {icon && <div className="text-4xl">{icon}</div>}
       <h3 className="text-lg font-bold">{title}</h3>
-      {text && <p className="max-w-xs text-sm text-neutral-600">{text}</p>}
+      {text && <p className="max-w-xs text-sm text-muted">{text}</p>}
       {action && <div className="mt-2">{action}</div>}
     </Card>
   )
@@ -92,14 +92,14 @@ export function EmptyState({ icon, title, text, action }: { icon?: string; title
 
 export function ErrorText({ children }: { children: ReactNode }) {
   if (!children) return null
-  return <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{children}</p>
+  return <p className="rounded-xl bg-red-500/15 px-3 py-2 text-sm text-red-300 ring-1 ring-red-500/30" role="alert">{children}</p>
 }
 
 export function PageHeader({ title, back, right }: { title: string; back?: string; right?: ReactNode }) {
   return (
     <div className="mb-4 flex items-center gap-3">
       {back && (
-        <Link to={back} aria-label="Voltar" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl shadow-sm">
+        <Link to={back} aria-label="Voltar" className="flex h-10 w-10 items-center justify-center rounded-full bg-surface text-xl shadow-md ring-1 ring-line/60">
           ‹
         </Link>
       )}
@@ -110,10 +110,10 @@ export function PageHeader({ title, back, right }: { title: string; back?: strin
 }
 
 export function Stat({ label, value, tone = 'neutral' }: { label: string; value: ReactNode; tone?: 'neutral' | 'green' | 'red' | 'amber' }) {
-  const tones = { neutral: 'text-neutral-900', green: 'text-green-700', red: 'text-red-700', amber: 'text-amber-700' }
+  const tones = { neutral: 'text-ink', green: 'text-green-300', red: 'text-red-300', amber: 'text-gold-300' }
   return (
-    <div className="rounded-xl bg-neutral-50 px-3 py-2">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">{label}</div>
+    <div className="rounded-xl bg-surface-2 px-3 py-2">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{label}</div>
       <div className={`text-base font-extrabold leading-tight tabular-nums ${tones[tone]}`}>{value}</div>
     </div>
   )
@@ -129,7 +129,7 @@ export function Toggle({ options, value, onChange, disabled }: { options: { valu
           disabled={disabled}
           onClick={() => onChange(o.value)}
           className={`rounded-xl border px-3 py-3 text-base font-semibold transition ${
-            value === o.value ? 'border-green-600 bg-green-600 text-white' : 'border-neutral-300 bg-white text-neutral-800'
+            value === o.value ? 'border-flame-500 bg-flame-500 text-white' : 'border-line bg-surface-2 text-ink'
           } disabled:opacity-60`}
           aria-pressed={value === o.value}
         >

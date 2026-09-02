@@ -41,9 +41,9 @@ export default function ManageMatch() {
   return (
     <div className="space-y-5">
       <PageHeader title="Gerenciar partida" back="/manage" right={<StatusPill status={status} />} />
-      <Card className="bg-pitch-900 text-white">
+      <Card className="glow-card bg-gradient-to-br from-navy-800 via-navy-900 to-navy-950 text-white">
         <div className="text-lg font-extrabold">{formatDateLong(match.date)}</div>
-        <div className="text-sm text-green-200">{formatTimeRange(match.startTime, match.durationMinutes)} · {match.venueName}{match.courtName ? ` · ${match.courtName}` : ''}</div>
+        <div className="text-sm text-sky-glow">{formatTimeRange(match.startTime, match.durationMinutes)} · {match.venueName}{match.courtName ? ` · ${match.courtName}` : ''}</div>
       </Card>
 
       <StatusSection match={match} />
@@ -87,15 +87,15 @@ function PlayersSection({ match, players, members, open }: { match: Match; playe
   return (
     <section id="players">
       <SectionTitle right={<Pill>{members.length} membros</Pill>}>Jogadores</SectionTitle>
-      <Card className="divide-y divide-neutral-100 p-0">
+      <Card className="divide-y divide-line/70 p-0">
         {members.map((m) => {
           const p = byId.get(m.uid)
           return (
             <div key={m.uid} className="flex items-center justify-between gap-2 px-3 py-2">
               <div className="min-w-0 flex-1 truncate font-medium">{shortName(m.name)}</div>
               <div className="flex shrink-0 items-center gap-1">
-                <button type="button" onClick={() => set(m, 'available', p?.position ?? 'line')} className={`rounded-lg px-2 py-1.5 text-xs font-bold ${p?.status === 'available' ? 'bg-green-600 text-white' : 'bg-neutral-100 text-neutral-600'}`} aria-label={`${m.name} disponível`}>✓</button>
-                <button type="button" onClick={() => set(m, 'unavailable', null)} className={`rounded-lg px-2 py-1.5 text-xs font-bold ${p?.status === 'unavailable' ? 'bg-red-600 text-white' : 'bg-neutral-100 text-neutral-600'}`} aria-label={`${m.name} indisponível`}>✗</button>
+                <button type="button" onClick={() => set(m, 'available', p?.position ?? 'line')} className={`rounded-lg px-2 py-1.5 text-xs font-bold ${p?.status === 'available' ? 'bg-green-500 text-white' : 'bg-surface-2 text-muted'}`} aria-label={`${m.name} disponível`}>✓</button>
+                <button type="button" onClick={() => set(m, 'unavailable', null)} className={`rounded-lg px-2 py-1.5 text-xs font-bold ${p?.status === 'unavailable' ? 'bg-red-500 text-white' : 'bg-surface-2 text-muted'}`} aria-label={`${m.name} indisponível`}>✗</button>
                 {p?.status === 'available' && (
                   <select value={p.position ?? 'line'} onChange={(e) => set(m, 'available', e.target.value as Position)} className="w-auto rounded-lg px-2 py-1 text-xs" aria-label={`Posição de ${m.name}`}>
                     {POSITIONS.map((pos) => <option key={pos.value} value={pos.value}>{pos.label}</option>)}
@@ -106,7 +106,7 @@ function PlayersSection({ match, players, members, open }: { match: Match; playe
           )
         })}
       </Card>
-      {!open && <p className="mt-1 text-xs text-neutral-500">Partida encerrada: os atletas não podem mais alterar a resposta, mas você pode ajustar.</p>}
+      {!open && <p className="mt-1 text-xs text-muted">Partida encerrada: os atletas não podem mais alterar a resposta, mas você pode ajustar.</p>}
     </section>
   )
 }
@@ -131,14 +131,14 @@ function PaymentsSection({ match, players, split }: { match: Match; players: Mat
           <Stat label="Restante" value={formatMoney(split.remaining)} tone={split.remaining > 0 ? 'amber' : 'green'} />
           <Stat label="Pagos / não" value={`${split.paidCount} / ${split.unpaidCount}`} />
         </div>
-        {match.costOverride != null && <p className="text-xs text-amber-700">Custo definido manualmente.</p>}
-        <ul className="divide-y divide-neutral-100">
-          {list.length === 0 && <li className="py-2 text-sm text-neutral-500">Nenhum jogador disponível ainda.</li>}
+        {match.costOverride != null && <p className="text-xs text-gold-300">Custo definido manualmente.</p>}
+        <ul className="divide-y divide-line/70">
+          {list.length === 0 && <li className="py-2 text-sm text-muted">Nenhum jogador disponível ainda.</li>}
           {list.map((p) => (
             <li key={p.id} className="flex items-center justify-between py-2">
               <span className="font-medium">{shortName(p.name)}</span>
               {p.position === 'goalkeeper' ? <Pill tone="amber">Goleiro / Isento</Pill> : (
-                <button type="button" onClick={() => toggle(p)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${p.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                <button type="button" onClick={() => toggle(p)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${p.paid ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
                   {p.paid ? '🟢 PAGO' : '🔴 NÃO PAGO'}
                 </button>
               )}
@@ -194,12 +194,12 @@ function TeamsSection({ match, players, split }: { match: Match; players: MatchP
           <Button onClick={generate} disabled={available.length === 0}>{match.teams.length ? '🎲 SORTEAR NOVAMENTE' : '🎲 GERAR TIMES'}</Button>
           <Button variant="outline" onClick={addManualTeam}>+ Time (manual)</Button>
         </div>
-        <p className="text-xs text-neutral-500">Goleiros são distribuídos de forma equilibrada entre os times. Depois do sorteio, mova jogadores manualmente pelo seletor.</p>
+        <p className="text-xs text-muted">Goleiros são distribuídos de forma equilibrada entre os times. Depois do sorteio, mova jogadores manualmente pelo seletor.</p>
 
         {match.teams.length > 0 && (
           <div className="space-y-3">
             {match.teams.map((t) => (
-              <div key={t.id} className="rounded-xl border border-neutral-200 p-3">
+              <div key={t.id} className="rounded-xl border border-line p-3">
                 <div className="mb-1 flex items-center justify-between"><span className="font-extrabold">{t.name}</span><Pill>{t.playerIds.length}</Pill></div>
                 <ul className="space-y-1">
                   {t.playerIds.map((pid) => {
@@ -217,8 +217,8 @@ function TeamsSection({ match, players, split }: { match: Match; players: MatchP
               </div>
             ))}
             {unassigned.length > 0 && (
-              <div className="rounded-xl bg-amber-50 p-3">
-                <div className="mb-1 text-xs font-bold uppercase text-amber-800">Sem time ({unassigned.length})</div>
+              <div className="rounded-xl bg-gold-400/10 p-3 ring-1 ring-gold-400/20">
+                <div className="mb-1 text-xs font-bold uppercase text-gold-300">Sem time ({unassigned.length})</div>
                 <ul className="space-y-1">
                   {unassigned.map((pid) => {
                     const p = byId.get(pid)
@@ -283,7 +283,7 @@ function DetailsSection({ match }: { match: Match }) {
     <section id="details">
       <SectionTitle right={<Button size="sm" variant="ghost" onClick={() => setOpenForm((v) => !v)}>{openForm ? 'Fechar' : 'Editar'}</Button>}>Dados da partida</SectionTitle>
       {openForm ? <Card><MatchForm key={match.id} match={match} onSubmit={submit} submitLabel="SALVAR ALTERAÇÕES" busy={busy} /></Card> : (
-        <Card className="text-sm text-neutral-700">
+        <Card className="text-sm text-slate-200">
           <div>{formatDateLong(match.date)} · {formatTimeRange(match.startTime, match.durationMinutes)}</div>
           <div>{match.venueName || '—'}{match.courtName ? ` · ${match.courtName}` : ''}</div>
           <div>Quadra: {formatMoney(match.hourlyRate)}/h · Custo: {formatMoney(computeSplit(match, []).cost)}{match.costOverride != null ? ' (manual)' : ''} · Mínimo: {match.minPlayers} jogadores</div>
@@ -301,5 +301,5 @@ function DangerSection({ match }: { match: Match }) {
     if (!confirm('Excluir esta partida definitivamente? As respostas dos atletas serão perdidas.')) return
     try { await deleteMatch(group!.id, match.id); toast('Partida excluída'); navigate('/manage', { replace: true }) } catch (err) { toast(errorMessage(err), 'error') }
   }
-  return <Button variant="ghost" size="sm" className="w-full text-red-600" onClick={remove}>Excluir partida</Button>
+  return <Button variant="ghost" size="sm" className="w-full text-red-300" onClick={remove}>Excluir partida</Button>
 }

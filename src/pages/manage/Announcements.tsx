@@ -44,7 +44,7 @@ export default function Announcements({ defaultMatchId = null }: { defaultMatchI
             <textarea rows={3} required value={text} onChange={(e) => setText(e.target.value)} placeholder="Ex.: Hoje o futebol começará às 20h." />
           </Field>
           <div className="flex flex-wrap gap-1">
-            {SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => setText(s)} className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs text-neutral-700">{s}</button>)}
+            {SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => setText(s)} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-slate-200">{s}</button>)}
           </div>
           <Field label="Vinculado a">
             <select value={matchId} onChange={(e) => setMatchId(e.target.value)}>
@@ -57,12 +57,12 @@ export default function Announcements({ defaultMatchId = null }: { defaultMatchI
       </Card>
       <section>
         <SectionTitle>Enviados</SectionTitle>
-        {loading ? <Spinner /> : announcements.length === 0 ? <p className="text-sm text-neutral-500">Nenhum comunicado ainda.</p> : (
+        {loading ? <Spinner /> : announcements.length === 0 ? <p className="text-sm text-muted">Nenhum comunicado ainda.</p> : (
           <div className="space-y-2">
             {announcements.map((a) => (
               <Card key={a.id} className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="text-xs text-neutral-500">{formatDateTime(a.createdAt)} · {a.createdByName}{a.matchId ? ` · partida ${formatDate(upcoming.find((m) => m.id === a.matchId)?.date ?? '') || 'passada'}` : ' · grupo'}</div>
+                  <div className="text-xs text-muted">{formatDateTime(a.createdAt)} · {a.createdByName}{a.matchId ? ` · partida ${formatDate(upcoming.find((m) => m.id === a.matchId)?.date ?? '') || 'passada'}` : ' · grupo'}</div>
                   <p className="whitespace-pre-wrap text-sm">{a.text}</p>
                 </div>
                 <Button size="sm" variant="ghost" onClick={() => remove(a.id)} aria-label="Excluir">🗑️</Button>

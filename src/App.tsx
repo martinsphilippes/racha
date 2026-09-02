@@ -55,7 +55,7 @@ function NotConfigured() {
   return (
     <div className="mx-auto max-w-md p-6">
       <h1 className="text-xl font-bold">Firebase não configurado</h1>
-      <p className="mt-2 text-sm text-neutral-700">Copie <code>.env.example</code> para <code>.env</code> e preencha as variáveis <code>VITE_FIREBASE_*</code> com os dados do seu projeto Firebase (ou defina <code>VITE_USE_EMULATORS=true</code> para desenvolvimento local).</p>
+      <p className="mt-2 text-sm text-slate-200">Copie <code>.env.example</code> para <code>.env</code> e preencha as variáveis <code>VITE_FIREBASE_*</code> com os dados do seu projeto Firebase (ou defina <code>VITE_USE_EMULATORS=true</code> para desenvolvimento local).</p>
     </div>
   )
 }
