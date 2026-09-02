@@ -1,0 +1,139 @@
+rules_version = '2';
+
+// Regras de segurança do Racha.
+// Princípios (seção 25 da especificação):
+//  - Um usuário só acessa grupos dos quais participa.
+//  - Só gestores alteram grupo, locais, agenda, partidas, pagamentos, times, PIX e comunicados.
+//  - Um atleta só altera a própria disponibilidade/posição, nunca o pagamento.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+
+    function memberPath(groupId) {
+      return /databases/$(database)/documents/groups/$(groupId)/members/$(uid());
+    }
+    function isMember(groupId) { return signedIn() && exists(memberPath(groupId)); }
+    function isManager(groupId) {
+      return signedIn() && exists(memberPath(groupId))
+        && get(memberPath(groupId)).data.role == 'manager';
+    }
+    function groupData(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data;
+    }
+    function changedOnly(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // ---------- Perfis ----------
+    match /users/{userId} {
+      allow read: if signedIn() && uid() == userId;
+      allow create: if signedIn() && uid() == userId
+        && request.resource.data.keys().hasAll(['name', 'email', 'phone', 'address', 'createdAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0;
+      allow update: if signedIn() && uid() == userId && changedOnly(['name', 'phone', 'address']);
+      allow delete: if false;
+    }
+
+    // Criação do grupo e do convite acontecem no mesmo lote: usa o estado "após o lote".
+    function isManagerAfter(groupId) {
+      return existsAfter(memberPath(groupId))
+        && getAfter(memberPath(groupId)).data.role == 'manager';
+    }
+
+    // ---------- Convites (código -> grupo) ----------
+    match /invites/{code} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.groupId is string
+        && isManagerAfter(request.resource.data.groupId);
+      allow delete: if signedIn() && isManager(resource.data.groupId);
+      allow update: if false;
+    }
+    // ---------- Grupos ----------
+    match /groups/{groupId} {
+      allow read: if isMember(groupId);
+      allow create: if signedIn() && request.resource.data.createdBy == uid()
+        && request.resource.data.name is string && request.resource.data.name.size() > 0;
+      allow update: if isManager(groupId) && changedOnly([
+        'name', 'sport', 'minPlayers', 'notes', 'defaultVenueId', 'defaultCourtId',
+        'weekday', 'startTime', 'durationMinutes',
+        'pixKeyType', 'pixKey', 'pixName', 'pixCity', 'inviteCode'
+      ]);
+      allow delete: if false;
+
+      // ---------- Membros ----------
+      match /members/{memberId} {
+        allow read: if isMember(groupId);
+        // (a) criador do grupo vira gestor no mesmo lote da criação;
+        // (b) entrada por código de convite, sempre como atleta.
+        allow create: if signedIn() && memberId == uid()
+          && request.resource.data.uid == uid()
+          && request.resource.data.groupId == groupId
+          && (
+            (request.resource.data.role == 'manager'
+              && getAfter(/databases/$(database)/documents/groups/$(groupId)).data.createdBy == uid())
+            ||
+            (request.resource.data.role == 'player'
+              && request.resource.data.inviteCode == groupData(groupId).inviteCode)
+          );
+        // Gestor promove/rebaixa; membro pode atualizar o próprio nome.
+        allow update: if (isManager(groupId) && changedOnly(['role']))
+          || (memberId == uid() && changedOnly(['name']));
+        // Gestor remove qualquer um (menos a si mesmo); atleta pode sair do grupo.
+        allow delete: if (isManager(groupId) && memberId != uid())
+          || (memberId == uid() && isMember(groupId) && resource.data.role == 'player');
+      }
+
+      // ---------- Locais e quadras ----------
+      match /venues/{venueId} {
+        allow read: if isMember(groupId);
+        allow write: if isManager(groupId);
+      }
+      match /courts/{courtId} {
+        allow read: if isMember(groupId);
+        allow write: if isManager(groupId);
+      }
+
+      // ---------- Agenda recorrente ----------
+      match /schedules/{scheduleId} {
+        allow read: if isMember(groupId);
+        allow write: if isManager(groupId);
+      }
+
+      // ---------- Partidas ----------
+      match /matches/{matchId} {
+        allow read: if isMember(groupId);
+        allow create, update: if isManager(groupId);
+        allow delete: if isManager(groupId);
+
+        // Disponibilidade / posição / pagamento por atleta
+        match /players/{playerId} {
+          allow read: if isMember(groupId);
+          // Atleta: cria/edita o próprio registro, sem tocar em pagamento.
+          allow create: if (isMember(groupId) && playerId == uid()
+              && request.resource.data.paid == false
+              && request.resource.data.paidAt == null)
+            || isManager(groupId);
+          allow update: if (isMember(groupId) && playerId == uid()
+              && changedOnly(['status', 'position', 'updatedAt', 'name']))
+            || isManager(groupId);
+          allow delete: if isManager(groupId);
+        }
+      }
+
+      // ---------- Comunicados ----------
+      match /announcements/{announcementId} {
+        allow read: if isMember(groupId);
+        allow create: if isManager(groupId) && request.resource.data.createdBy == uid();
+        allow update, delete: if isManager(groupId);
+      }
+    }
+
+    // Consulta em grupo de coleção: "de quais grupos eu participo?"
+    match /{path=**}/members/{memberId} {
+      allow read: if signedIn() && resource.data.uid == uid();
+    }
+  }
+}

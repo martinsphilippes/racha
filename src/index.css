@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pitch-950: #06120c;
+  --color-pitch-900: #0b1b13;
+  --color-pitch-800: #11271b;
+  --color-pitch-700: #183625;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overscroll-behavior-y: none;
+}
+
+body {
+  @apply bg-neutral-100 text-neutral-900 antialiased;
+  font-family: var(--font-sans);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+#root { min-height: 100%; }
+
+/* Área de toque grande: essencial no uso diário no celular. */
+button, a, input, select, textarea { touch-action: manipulation; }
+
+input, select, textarea {
+  @apply w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600/20;
+}
+select { appearance: auto; }
+
+@keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: fade-in 180ms ease-out; }

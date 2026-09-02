@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - name: Typecheck e build
+        run: npm run build
+      - name: Testes de lógica (rateio, datas, times, PIX)
+        run: npm test
+      - name: Testes das regras de segurança (emulador Firestore)
+        run: npm run test:rules
+      - name: Teste end-to-end (emuladores + Playwright)
+        run: |
+          npx playwright install --with-deps chromium
+          npx firebase emulators:exec --only auth,firestore --project demo-racha "npx playwright test"
