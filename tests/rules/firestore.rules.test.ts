@@ -64,6 +64,26 @@ describe('diretório e papéis de plataforma', () => {
   })
 })
 
+describe('registro de acessos', () => {
+  const entry = (uid: string | null) => ({ uid, name: null, email: null, deviceId: 'dev1', at: 1, platform: 'ios', installed: false, version: '1', path: '/' })
+  it('visitante sem conta e usuário logado registram o próprio acesso; ninguém registra por outro', async () => {
+    await assertSucceeds(setDoc(doc(env.unauthenticatedContext().firestore(), 'accessLogs', 'a1'), entry(null)))
+    await assertSucceeds(setDoc(doc(ctx(PLAYER), 'accessLogs', 'a2'), entry(PLAYER)))
+    await assertFails(setDoc(doc(ctx(PLAYER), 'accessLogs', 'a3'), entry(MANAGER)))
+    await assertFails(setDoc(doc(ctx(PLAYER), 'accessLogs', 'a4'), { ...entry(PLAYER), extra: 'x' }))
+  })
+  it('só o dono lê os acessos; ninguém edita', async () => {
+    await env.withSecurityRulesDisabled(async (c) => setDoc(doc(c.firestore(), 'accessLogs', 'a1'), entry(PLAYER)))
+    await assertSucceeds(getDocs(collection(ctx(OWNER), 'accessLogs')))
+    await assertFails(getDocs(collection(ctx(ORGANIZER), 'accessLogs')))
+    await assertFails(updateDoc(doc(ctx(OWNER), 'accessLogs', 'a1'), { at: 2 }))
+  })
+  it('usuário atualiza o próprio último acesso no diretório', async () => {
+    await assertSucceeds(updateDoc(doc(ctx(PLAYER), 'directory', PLAYER), { lastSeenAt: 5 }))
+    await assertFails(updateDoc(doc(ctx(PLAYER), 'directory', MANAGER), { lastSeenAt: 5 }))
+  })
+})
+
 describe('grupos', () => {
   it('organizador cria grupo e vira gestor no mesmo lote; atleta não cria', async () => {
     const db = ctx(ORGANIZER)

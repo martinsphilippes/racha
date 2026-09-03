@@ -43,12 +43,24 @@ service cloud.firestore {
         && request.resource.data.email is string
         && (request.resource.data.platformRole == 'athlete'
             || (request.resource.data.platformRole == 'owner' && isOwner()));
-      // Só o dono muda papéis; cada um atualiza o próprio nome.
+      // Só o dono muda papéis; cada um atualiza o próprio nome e o próprio último acesso.
       allow update: if (isOwner() && changedOnly(['platformRole'])
             && request.resource.data.platformRole in ['athlete', 'organizer', 'owner']
             && (request.resource.data.platformRole != 'owner' || userId == uid()))
-        || (uid() == userId && changedOnly(['name']));
+        || (uid() == userId && changedOnly(['name', 'lastSeenAt']));
       allow delete: if false;
+    }
+
+    // ---------- Registro de acessos (quem abriu o app e quando) ----------
+    match /accessLogs/{logId} {
+      allow read: if isOwner();
+      // Qualquer aparelho registra a própria abertura (visitante sem conta usa uid null).
+      allow create: if request.resource.data.keys().hasOnly(['uid', 'name', 'email', 'deviceId', 'at', 'platform', 'installed', 'version', 'path'])
+        && request.resource.data.at is number
+        && request.resource.data.deviceId is string && request.resource.data.deviceId.size() <= 40
+        && request.resource.data.path is string && request.resource.data.path.size() <= 200
+        && (request.resource.data.uid == null || (signedIn() && request.resource.data.uid == uid()));
+      allow update, delete: if false;
     }
 
     // ---------- Perfil privado ----------

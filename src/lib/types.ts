@@ -44,6 +44,7 @@ export interface DirectoryEntry {
   email: string
   platformRole: PlatformRole
   createdAt: number
+  lastSeenAt?: number // último acesso registrado
 }
 
 // users/{uid} — privado (só o próprio usuário lê)

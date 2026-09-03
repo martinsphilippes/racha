@@ -77,6 +77,9 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   if (await o.getByText('Este e-mail já está cadastrado.').isVisible()) await login(o, owner)
   await o.goto('/admin')
   await expect(o.getByText('Usuários e permissões')).toBeVisible()
+  // Registro de acessos: o próprio dono e os cadastros anteriores já aparecem
+  await expect(o.getByText('Acessos ao app')).toBeVisible()
+  await expect(o.getByText(manager.name).first()).toBeVisible()
   await o.getByLabel('Buscar usuário').fill(manager.email)
   await o.getByRole('button', { name: `Tornar organizador: ${manager.name}` }).click()
   await expect(o.getByText('Agora é organizador')).toBeVisible()

@@ -12,6 +12,7 @@ import { auth, db } from '@/lib/firebase'
 import type { DirectoryEntry, UserProfile } from '@/lib/types'
 import { isOwnerEmail, type PlatformRole } from '@/lib/platform'
 import { ensureDirectoryEntry } from '@/lib/repo'
+import { logAccess } from '@/lib/access'
 import type { Address } from '@/lib/cep'
 
 interface SignupInput {
@@ -61,6 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     })
   }, [])
+
+  // Registro de acesso: ao abrir o app (com ou sem conta) e ao voltar ao primeiro plano.
+  useEffect(() => {
+    if (!authReady) return
+    const info = user ? { uid: user.uid, name: user.displayName, email: user.email } : null
+    logAccess(info)
+    const onVisible = () => { if (document.visibilityState === 'visible') logAccess(info) }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [authReady, user])
 
   // Registro no diretório (papel de plataforma). Criado no cadastro; reparado aqui se faltar.
   useEffect(() => {

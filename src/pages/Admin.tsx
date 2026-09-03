@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '@/hooks/useAuth'
 import { useGroup } from '@/hooks/useGroupContext'
-import { useAllGroups, useDirectory } from '@/hooks/usePlatform'
+import { useAccessLogs, useAllGroups, useDirectory } from '@/hooks/usePlatform'
+import { formatDateTime } from '@/lib/format'
 import { setPlatformRole } from '@/lib/repo'
 import { PLATFORM_ROLE_LABEL } from '@/lib/platform'
 import { SPORTS } from '@/lib/types'
-import { Button, Card, LinkButton, PageHeader, Pill, SectionTitle, Spinner } from '@/components/ui'
+import { Button, Card, LinkButton, PageHeader, Pill, SectionTitle, Spinner, Stat } from '@/components/ui'
 import { errorMessage, useToast } from '@/components/Toast'
 
 /** Área do dono: define quem é organizador e acessa qualquer grupo. */
@@ -15,8 +16,21 @@ export default function Admin() {
   const { setGroupId } = useGroup()
   const { data: people, loading } = useDirectory(isOwner)
   const { data: groups } = useAllGroups(isOwner)
+  const { data: logs, loading: logsLoading } = useAccessLogs(isOwner)
   const toast = useToast()
   const [search, setSearch] = useState('')
+  const [showAllLogs, setShowAllLogs] = useState(false)
+
+  const accessStats = useMemo(() => {
+    const now = Date.now()
+    const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0)
+    const week = now - 7 * 24 * 60 * 60 * 1000
+    const today = logs.filter((l) => l.at >= startOfDay.getTime())
+    const last7 = logs.filter((l) => l.at >= week)
+    const people7 = new Set(last7.map((l) => l.uid ?? `visitante:${l.deviceId}`)).size
+    const visitors7 = last7.filter((l) => !l.uid).length
+    return { today: today.length, last7: last7.length, people7, visitors7 }
+  }, [logs])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -46,7 +60,7 @@ export default function Admin() {
               <li key={p.uid} className="flex items-center justify-between gap-2 py-2">
                 <div className="min-w-0">
                   <div className="truncate font-semibold">{p.name}{p.uid === user?.uid ? ' (você)' : ''}</div>
-                  <div className="truncate text-xs text-muted">{p.email}</div>
+                  <div className="truncate text-xs text-muted">{p.email}{p.lastSeenAt ? ` · último acesso ${formatDateTime(p.lastSeenAt)}` : ' · nunca acessou'}</div>
                 </div>
                 {p.platformRole === 'owner' ? <Pill tone="amber">{PLATFORM_ROLE_LABEL.owner}</Pill> : (
                   <button
@@ -62,6 +76,33 @@ export default function Admin() {
             ))}
             {!loading && filtered.length === 0 && <li className="py-2 text-sm text-muted">Nenhum usuário encontrado.</li>}
           </ul>
+        </Card>
+      </section>
+
+      <section>
+        <SectionTitle right={<Pill>{logs.length} registros</Pill>}>Acessos ao app</SectionTitle>
+        <Card className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <Stat label="Hoje" value={accessStats.today} tone="green" />
+            <Stat label="Últimos 7 dias" value={accessStats.last7} />
+            <Stat label="Pessoas (7 dias)" value={accessStats.people7} tone="amber" />
+            <Stat label="Visitantes sem conta (7 dias)" value={accessStats.visitors7} />
+          </div>
+          <p className="text-xs text-muted">Cada abertura do app conta uma vez a cada 30 minutos por aparelho. Quem abre o link sem conta aparece como Visitante até se cadastrar.</p>
+          {logsLoading ? <Spinner /> : logs.length === 0 ? <p className="text-sm text-muted">Nenhum acesso registrado ainda.</p> : (
+            <ul className="divide-y divide-line/70">
+              {(showAllLogs ? logs : logs.slice(0, 20)).map((l) => (
+                <li key={l.id} className="flex items-center justify-between gap-2 py-2">
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold">{l.name ?? (l.uid ? 'Usuário' : 'Visitante sem conta')}</div>
+                    <div className="truncate text-xs text-muted">{formatDateTime(l.at)} · {l.platform === 'ios' ? 'iPhone' : l.platform === 'android' ? 'Android' : 'Computador'}{l.installed ? ' · app instalado' : ' · navegador'}{l.path && l.path !== '/' ? ` · ${l.path}` : ''}</div>
+                  </div>
+                  <Pill tone={l.uid ? 'blue' : 'neutral'}>{l.uid ? 'conta' : 'visitante'}</Pill>
+                </li>
+              ))}
+            </ul>
+          )}
+          {logs.length > 20 && <Button variant="ghost" size="sm" className="w-full" onClick={() => setShowAllLogs((v) => !v)}>{showAllLogs ? 'Mostrar menos' : `Ver todos (${logs.length})`}</Button>}
         </Card>
       </section>
 
