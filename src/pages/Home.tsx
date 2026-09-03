@@ -25,9 +25,9 @@ export default function Home() {
   if (memberships.length === 0 && membershipsSynced) {
     if (!roleReady) return <Spinner />
     return (
-      <div className="space-y-4 pt-2">
+      <div className="space-y-4 pt-4">
         <div className="text-center">
-          <img src="/brand/logo.webp" alt="Racha 10" className="mx-auto mb-2 h-40 w-auto" />
+          <img src="/brand/logo.webp" alt="Racha 10" className="mx-auto mb-3 h-40 w-auto" />
           <h1 className="text-2xl font-extrabold">Bem-vindo ao Racha!</h1>
         </div>
         {canOrganize ? (
