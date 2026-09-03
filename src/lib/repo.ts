@@ -98,6 +98,17 @@ export async function addMember(gid: string, entry: Pick<DirectoryEntry, 'uid' |
   await setDoc(memberRef(gid, entry.uid), member)
 }
 
+/** Adiciona vários atletas de uma vez (um único envio ao banco). */
+export async function addMembers(gid: string, entries: Pick<DirectoryEntry, 'uid' | 'name'>[], actor: Actor): Promise<void> {
+  if (entries.length === 0) return
+  const batch = writeBatch(db)
+  for (const entry of entries) {
+    const member: Omit<Member, 'id'> = { uid: entry.uid, groupId: gid, name: entry.name, role: 'player', joinedAt: Date.now(), addedBy: actor.uid }
+    batch.set(memberRef(gid, entry.uid), member)
+  }
+  await batch.commit()
+}
+
 export async function setMemberRole(gid: string, uid: string, role: Member['role']): Promise<void> {
   await updateDoc(memberRef(gid, uid), { role })
 }

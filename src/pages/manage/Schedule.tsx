@@ -88,21 +88,19 @@ function ScheduleForm({ schedule, onClose }: { schedule: Partial<Schedule>; onCl
     courtId: schedule.courtId ?? '',
     weeksAhead: (schedule.weeksAhead ?? 4) as number | null,
   })
-  const [busy, setBusy] = useState(false)
   const venueCourts = courts.filter((c) => c.venueId === (form.venueId || venues[0]?.id))
   const courtId = venueCourts.some((c) => c.id === form.courtId) ? form.courtId : venueCourts[0]?.id ?? ''
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault()
     if (!group || !user || !courtId) return
-    setBusy(true)
-    try {
-      const input = { ...form, durationMinutes: form.durationMinutes ?? 90, weeksAhead: form.weeksAhead ?? 4, venueId: form.venueId || venues[0]?.id, courtId }
-      const id = await saveSchedule(group.id, input, schedule.id)
-      const n = await ensureUpcomingMatches(group, { ...input, id, active: true, createdAt: Date.now() }, venues, courts, user.uid)
-      toast(n ? `Agenda salva · ${n} partida${n === 1 ? '' : 's'} gerada${n === 1 ? '' : 's'}` : 'Agenda salva')
-      onClose()
-    } catch (err) { toast(errorMessage(err), 'error') } finally { setBusy(false) }
+    const input = { ...form, durationMinutes: form.durationMinutes ?? 90, weeksAhead: form.weeksAhead ?? 4, venueId: form.venueId || venues[0]?.id, courtId }
+    // Fecha na hora; a geração das partidas roda em seguida e avisa o resultado.
+    onClose()
+    saveSchedule(group.id, input, schedule.id)
+      .then((id) => ensureUpcomingMatches(group, { ...input, id, active: true, createdAt: Date.now() }, venues, courts, user.uid))
+      .then((n) => toast(n ? `Agenda salva · ${n} partida${n === 1 ? '' : 's'} gerada${n === 1 ? '' : 's'}` : 'Agenda salva'))
+      .catch((err) => toast(errorMessage(err), 'error'))
   }
 
   return (
@@ -130,7 +128,7 @@ function ScheduleForm({ schedule, onClose }: { schedule: Partial<Schedule>; onCl
         </Field>
         <Field label="Semanas geradas à frente"><NumberInput required value={form.weeksAhead} onChange={(v) => setForm({ ...form, weeksAhead: v })} /></Field>
         <div className="space-y-2 pt-1">
-          <Button type="submit" className="w-full" disabled={busy || !courtId}>{busy ? 'Salvando…' : 'Salvar e gerar partidas'}</Button>
+          <Button type="submit" className="w-full" disabled={!courtId}>Salvar e gerar partidas</Button>
           <Button type="button" variant="ghost" className="w-full" onClick={onClose}>Cancelar</Button>
         </div>
       </form>

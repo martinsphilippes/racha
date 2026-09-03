@@ -6,6 +6,7 @@ import { useAutoGenerateMatches } from '@/hooks/useAutoGenerateMatches'
 import { formatDate, formatTimeRange, WEEKDAYS_SHORT, parseDate } from '@/lib/format'
 import { Button, Card, EmptyState, LinkButton, SectionTitle, Spinner } from '@/components/ui'
 import MatchView, { AnnouncementCards } from '@/components/MatchView'
+import InstallBanner from '@/components/InstallBanner'
 
 export default function Home() {
   const { profile, canOrganize, isOwner, roleReady } = useAuth()
@@ -26,6 +27,7 @@ export default function Home() {
     if (!roleReady) return <Spinner />
     return (
       <div className="space-y-4 pt-4">
+        <InstallBanner />
         <div className="text-center">
           <img src="/brand/logo.webp" alt="Racha 10" className="mx-auto mb-3 h-40 w-auto" />
           <h1 className="text-2xl font-extrabold">Bem-vindo ao Racha!</h1>
@@ -55,6 +57,7 @@ export default function Home() {
 
   return (
     <div className="space-y-4">
+      <InstallBanner compact />
       {memberships.length > 1 && (
         <select value={groupId ?? ''} onChange={(e) => setGroupId(e.target.value)} className="font-semibold" aria-label="Grupo">
           {memberships.map((m) => <option key={m.groupId} value={m.groupId}>{groupNames[m.groupId] ?? (m.groupId === groupId ? group.name : 'Grupo')}</option>)}

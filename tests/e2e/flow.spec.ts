@@ -32,6 +32,20 @@ async function login(page: Page, u: typeof manager) {
   await page.getByRole('button', { name: 'ENTRAR' }).click()
 }
 
+test('convite para instalar: iPhone vê o passo a passo; app instalado não vê', async ({ browser }) => {
+  const ios = await browser.newContext({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' })
+  const p = await ios.newPage()
+  await p.goto('/login')
+  await expect(p.getByText('Adicione o Racha 10 à tela de início')).toBeVisible()
+  await p.getByRole('button', { name: /Ver como instalar/ }).click()
+  await expect(p.getByText('Adicionar à Tela de Início')).toBeVisible()
+  await p.getByRole('button', { name: 'Agora não' }).click()
+  await expect(p.getByText('Adicione o Racha 10 à tela de início')).toHaveCount(0)
+  await p.reload()
+  await expect(p.getByText('Adicione o Racha 10 à tela de início')).toHaveCount(0) // dispensa lembrada
+  await ios.close()
+})
+
 test('dono → organizador → grupo → atleta → disponibilidade → rateio → PIX → pagamento → times → comunicado', async ({ browser }) => {
   const ownerCtx = await browser.newContext()
   const managerCtx = await browser.newContext()
@@ -131,8 +145,11 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   // Antes da confirmação, a lista mostra a previsão com o mínimo do grupo (2): R$ 300 / 2
   await expect(m.getByText('previsão R$ 150,00 por jogador')).toBeVisible()
   await m.goto('/manage/members')
-  await m.getByLabel('Buscar jogador').fill(athlete.email)
-  await m.getByRole('button', { name: `Adicionar ${athlete.name}` }).click()
+  // Lista de cadastrados com seleção: marca o atleta e adiciona
+  await expect(m.getByRole('checkbox', { name: athlete.name })).toBeVisible()
+  await m.getByLabel('Buscar jogador').fill(athlete.email) // o filtro é opcional
+  await m.getByRole('checkbox', { name: athlete.name }).check()
+  await m.getByRole('button', { name: 'Adicionar 1 jogador' }).click()
   await expect(m.getByText(`${athlete.name} adicionado ao grupo`)).toBeVisible()
 
   // ----- Atleta vê a partida em tempo real, sem recarregar -----

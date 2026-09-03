@@ -82,13 +82,12 @@ function VenueForm({ groupId, venue, onClose }: { groupId: string; venue: Partia
     name: venue.name ?? '', address: venue.address ?? '', notes: venue.notes ?? '',
     coords: venue.lat != null && venue.lng != null ? { lat: venue.lat, lng: venue.lng } : null as { lat: number; lng: number } | null,
   })
-  const [busy, setBusy] = useState(false)
-  async function submit(e: FormEvent) {
-    e.preventDefault(); setBusy(true)
-    try {
-      await saveVenue(groupId, { ...venue, name: form.name, address: form.address, notes: form.notes, lat: form.coords?.lat ?? null, lng: form.coords?.lng ?? null })
-      toast('Local salvo'); onClose()
-    } catch (err) { toast(errorMessage(err), 'error') } finally { setBusy(false) }
+  // Fecha na hora (gravação otimista); se o servidor recusar, avisa.
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    saveVenue(groupId, { ...venue, name: form.name, address: form.address, notes: form.notes, lat: form.coords?.lat ?? null, lng: form.coords?.lng ?? null })
+      .catch((err) => toast(errorMessage(err), 'error'))
+    toast('Local salvo'); onClose()
   }
   return (
     <Card className="border-2 border-flame-500">
@@ -101,7 +100,7 @@ function VenueForm({ groupId, venue, onClose }: { groupId: string; venue: Partia
         <Field label="Observações"><input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" disabled={busy}>Salvar</Button>
+          <Button type="submit">Salvar</Button>
         </div>
       </form>
     </Card>
@@ -111,10 +110,10 @@ function VenueForm({ groupId, venue, onClose }: { groupId: string; venue: Partia
 function CourtForm({ groupId, court, defaultSport, onClose }: { groupId: string; court: Partial<Court>; defaultSport: Sport; onClose: () => void }) {
   const toast = useToast()
   const [form, setForm] = useState({ name: court.name ?? '', sport: court.sport ?? defaultSport, hourlyRate: (court.hourlyRate ?? null) as number | null, notes: court.notes ?? '' })
-  const [busy, setBusy] = useState(false)
-  async function submit(e: FormEvent) {
-    e.preventDefault(); setBusy(true)
-    try { await saveCourt(groupId, { ...court, venueId: court.venueId!, ...form, hourlyRate: form.hourlyRate ?? 0 }); toast('Quadra salva'); onClose() } catch (err) { toast(errorMessage(err), 'error') } finally { setBusy(false) }
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    saveCourt(groupId, { ...court, venueId: court.venueId!, ...form, hourlyRate: form.hourlyRate ?? 0 }).catch((err) => toast(errorMessage(err), 'error'))
+    toast('Quadra salva'); onClose()
   }
   return (
     <Card className="border-2 border-flame-500">
@@ -130,7 +129,7 @@ function CourtForm({ groupId, court, defaultSport, onClose }: { groupId: string;
         <Field label="Observações"><input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" disabled={busy}>Salvar</Button>
+          <Button type="submit">Salvar</Button>
         </div>
       </form>
     </Card>

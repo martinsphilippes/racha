@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { authErrorMessage, useAuth } from '@/hooks/useAuth'
 import { Button, ErrorText, Field } from '@/components/ui'
+import InstallBanner from '@/components/InstallBanner'
 
 export default function Login() {
   const { login } = useAuth()
@@ -48,6 +49,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
         <h2 className="mb-4 text-xl font-bold">{title}</h2>
         {children}
       </div>
+      <div className="mt-4"><InstallBanner compact /></div>
     </div>
   )
 }
