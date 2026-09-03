@@ -44,7 +44,8 @@ export default function Dashboard() {
               <Stat label="Linha" value={split.linePlayers.length} />
               <Stat label="Times" value={match.teams.length || '—'} />
               <Stat label="Valor partida" value={formatMoney(split.cost)} />
-              <Stat label="Por atleta" value={formatMoney(split.perPlayer)} />
+              <Stat label={match.status === 'confirmed' ? 'Por atleta' : 'Por atleta (hoje)'} value={formatMoney(split.perPlayer)} />
+              <Stat label={`Previsão c/ ${split.estimatedPlayers}`} value={formatMoney(split.estimatedPerPlayer)} tone="amber" />
               <Stat label="Recebido" value={formatMoney(split.received)} tone="green" />
               <Stat label="Pagos" value={split.paidCount} tone="green" />
               <Stat label="Não pagos" value={split.unpaidCount} tone="red" />

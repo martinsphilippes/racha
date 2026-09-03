@@ -137,7 +137,8 @@ function PaymentsSection({ match, players, split }: { match: Match; players: Mat
         <div className="grid grid-cols-3 gap-2">
           <Stat label="Custo quadra" value={formatMoney(split.cost)} />
           <Stat label="Pagantes" value={split.payers.length} />
-          <Stat label="Individual" value={formatMoney(split.perPlayer)} />
+          <Stat label="Individual (hoje)" value={formatMoney(split.perPlayer)} />
+          <Stat label={`Previsão c/ ${split.estimatedPlayers}`} value={formatMoney(split.estimatedPerPlayer)} tone="amber" />
           <Stat label="Recebido" value={formatMoney(split.received)} tone="green" />
           <Stat label="Restante" value={formatMoney(split.remaining)} tone={split.remaining > 0 ? 'amber' : 'green'} />
           <Stat label="Pagos / não" value={`${split.paidCount} / ${split.unpaidCount}`} />

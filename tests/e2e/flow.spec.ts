@@ -105,6 +105,7 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await expect(m.getByText('Marcado no mapa')).toBeVisible()
   await m.getByRole('button', { name: 'Salvar' }).click()
   await expect(m.getByText('📍 Arena Ituiutaba, Avenida Central, 120')).toBeVisible()
+  await expect(m.getByRole('heading', { name: 'Editar local' })).toHaveCount(0) // formulário fechou
   await m.getByRole('button', { name: 'Editar local Arena Ituiutaba' }).click()
   await expect(m.getByLabel('Número')).toHaveValue('120')
   await m.getByRole('button', { name: 'Cancelar' }).click()
@@ -127,7 +128,8 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   // ----- Organizador joga e adiciona o atleta pelo diretório -----
   await m.goto('/')
   await m.getByRole('button', { name: 'DISPONÍVEL', exact: false }).first().click()
-  await expect(m.getByText('R$ 300,00 por jogador')).toBeVisible()
+  // Antes da confirmação, a lista mostra a previsão com o mínimo do grupo (2): R$ 300 / 2
+  await expect(m.getByText('previsão R$ 150,00 por jogador')).toBeVisible()
   await m.goto('/manage/members')
   await m.getByLabel('Buscar jogador').fill(athlete.email)
   await m.getByRole('button', { name: `Adicionar ${athlete.name}` }).click()
@@ -150,10 +152,13 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await expect(a.getByText('Goleiro · isento')).toBeVisible()
   await m.goto('/')
   await expect(m.getByText('2 jogadores confirmados · mínimo atingido')).toBeVisible()
-  await expect(m.getByText('R$ 300,00 por jogador')).toBeVisible()
+  await expect(m.getByText('previsão R$ 150,00 por jogador')).toBeVisible()
   await a.getByRole('button', { name: 'Linha' }).click()
+  await expect(a.getByText('Previsão com 2 jogadores', { exact: false })).toBeVisible()
   await expect(a.getByText('R$ 150,00', { exact: true })).toBeVisible()
-  await expect(m.getByText('R$ 150,00 por jogador')).toBeVisible()
+  await expect(a.getByText(/goleiros não pagam/)).toBeVisible()
+  await expect(a.getByText(/liberados quando o organizador confirmar/)).toBeVisible()
+  await expect(m.getByText('previsão R$ 150,00 por jogador')).toBeVisible()
 
   // ----- PIX -----
   await m.goto('/manage/group')
@@ -163,9 +168,18 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await m.getByLabel('Cidade do recebedor').fill('Ituiutaba')
   await m.getByRole('button', { name: 'Salvar PIX' }).click()
   await expect(m.getByText('PIX salvo')).toBeVisible()
+  // PIX continua bloqueado para o atleta até a confirmação
+  await expect(a.getByRole('button', { name: 'COPIA E COLA' })).toHaveCount(0)
+
+  // ----- Gestor confirma o futebol: valor final e PIX liberados -----
+  await m.goto('/manage')
+  await m.getByRole('link', { name: 'Gerenciar partida' }).click()
+  await m.getByRole('button', { name: 'Confirmar futebol' }).click()
+  await expect(a.getByText('Confirmada')).toBeVisible()
   await expect(a.getByText('carlos@pix.com')).toBeVisible()
   await expect(a.getByRole('button', { name: 'COPIA E COLA' })).toBeEnabled()
   await expect(a.getByText('🔴 NÃO PAGO', { exact: true })).toBeVisible()
+  await expect(m.getByText('R$ 150,00 por jogador')).toBeVisible().catch(() => undefined)
 
   // ----- Pagamento -----
   await m.goto('/')
@@ -183,8 +197,6 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await m.getByPlaceholder('Ex.: Hoje o futebol começará às 20h.').fill('Hoje o futebol começará às 20h.')
   await m.getByRole('button', { name: 'ENVIAR COMUNICADO' }).click()
   await expect(a.getByText('Hoje o futebol começará às 20h.')).toBeVisible()
-  await m.getByRole('button', { name: 'Confirmar futebol' }).click()
-  await expect(a.getByText('Confirmada')).toBeVisible()
 
   // ----- Dono enxerga o grupo sem ser membro -----
   await o.goto('/admin')

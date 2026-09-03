@@ -24,6 +24,9 @@ export function isGoalkeeper(p: Pick<MatchPlayer, 'position'>): boolean {
 
 export interface Split {
   cost: number
+  /** Previsão do valor individual com a quantidade mínima de jogadores configurada (evita o susto de quem confirma cedo). */
+  estimatedPerPlayer: number
+  estimatedPlayers: number
   available: MatchPlayer[]
   unavailable: MatchPlayer[]
   goalkeepers: MatchPlayer[]
@@ -42,7 +45,7 @@ export interface Split {
  * mudança de disponibilidade/posição — o valor exibido é sempre o atual.
  */
 export function computeSplit(
-  match: Pick<Match, 'hourlyRate' | 'durationMinutes' | 'costOverride'>,
+  match: Pick<Match, 'hourlyRate' | 'durationMinutes' | 'costOverride'> & { minPlayers?: number },
   players: MatchPlayer[],
 ): Split {
   const cost = matchCost(match)
@@ -57,7 +60,10 @@ export function computeSplit(
   const unpaidCount = payers.length - paidCount
   const received = round2(paidCount * perPlayer)
   const remaining = Math.max(0, round2(cost - received))
-  return { cost, available, unavailable, goalkeepers, linePlayers, payers, perPlayer, paidCount, unpaidCount, received, remaining }
+  // Previsão: rateio com o mínimo de jogadores do grupo (ou os pagantes atuais, se já forem mais).
+  const estimatedPlayers = Math.max(match.minPlayers ?? 0, payers.length)
+  const estimatedPerPlayer = estimatedPlayers > 0 ? Math.ceil((cost / estimatedPlayers) * 100) / 100 : 0
+  return { cost, estimatedPerPlayer, estimatedPlayers, available, unavailable, goalkeepers, linePlayers, payers, perPlayer, paidCount, unpaidCount, received, remaining }
 }
 
 /** Status efetivo: partidas abertas/confirmadas cujo horário já passou aparecem como finalizadas. */

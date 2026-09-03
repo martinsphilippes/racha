@@ -32,8 +32,8 @@ export default function Venues() {
     <div className="space-y-5">
       <PageHeader title="Locais e quadras" back="/manage" right={<Button size="sm" onClick={() => setEditingVenue({})}>+ Local</Button>} />
 
-      {editingVenue && <VenueForm groupId={group.id} venue={editingVenue} onClose={() => setEditingVenue(null)} />}
-      {editingCourt && <CourtForm groupId={group.id} court={editingCourt} defaultSport={group.sport} onClose={() => setEditingCourt(null)} />}
+      {editingVenue && <VenueForm key={editingVenue.id ?? 'new'} groupId={group.id} venue={editingVenue} onClose={() => setEditingVenue(null)} />}
+      {editingCourt && <CourtForm key={editingCourt.id ?? 'new'} groupId={group.id} court={editingCourt} defaultSport={group.sport} onClose={() => setEditingCourt(null)} />}
 
       {loading ? <Spinner /> : venues.length === 0 && !editingVenue ? (
         <EmptyState icon="📍" title="Nenhum local cadastrado" text="Cadastre o local e a quadra onde o futebol acontece. O valor por hora da quadra calcula o custo das partidas." action={<Button onClick={() => setEditingVenue({})}>Cadastrar local</Button>} />

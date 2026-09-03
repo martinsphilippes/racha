@@ -39,7 +39,7 @@ export default function MatchView({ group, match, players, members, announcement
       <MatchHeader group={group} match={match} status={status} availableCount={split.available.length} />
       <AnnouncementCards items={relevantAnnouncements} />
       {open && <AvailabilityCard group={group} match={match} me={me} />}
-      {me?.status === 'available' && open && <PaymentCard group={group} match={match} me={me} split={split} />}
+      {me?.status === 'available' && open && <PaymentCard group={group} match={match} me={me} split={split} confirmed={status === 'confirmed'} />}
       {match.teams.length > 0 && <TeamsCard match={match} players={players} />}
       <PlayersCard group={group} match={match} players={players} members={members} split={split} isManager={isManager} open={open} />
       {isManager && (
@@ -142,7 +142,7 @@ function AvailabilityCard({ group, match, me }: { group: Group; match: Match; me
   )
 }
 
-function PaymentCard({ group, match, me, split }: { group: Group; match: Match; me: MatchPlayer; split: ReturnType<typeof computeSplit> }) {
+function PaymentCard({ group, match, me, split, confirmed }: { group: Group; match: Match; me: MatchPlayer; split: ReturnType<typeof computeSplit>; confirmed: boolean }) {
   const toast = useToast()
   const isGk = me.position === 'goalkeeper'
   const hasPix = Boolean(group.pixKey)
@@ -162,11 +162,22 @@ function PaymentCard({ group, match, me, split }: { group: Group; match: Match; 
     toast(ok ? `${label} copiado!` : 'Não foi possível copiar', ok ? 'ok' : 'error')
   }
 
+  const explainer = 'O valor da quadra é rateado entre os jogadores de linha disponíveis; goleiros não pagam.'
+
   return (
     <Card>
-      <SectionTitle right={isGk ? <Pill tone="green">Goleiro · isento</Pill> : <Pill tone={me.paid ? 'green' : 'red'}>{me.paid ? '🟢 PAGO' : '🔴 NÃO PAGO'}</Pill>}>Pagamento</SectionTitle>
+      <SectionTitle right={isGk ? <Pill tone="green">Goleiro · isento</Pill> : confirmed ? <Pill tone={me.paid ? 'green' : 'red'}>{me.paid ? '🟢 PAGO' : '🔴 NÃO PAGO'}</Pill> : <Pill tone="amber">Previsão</Pill>}>Pagamento</SectionTitle>
       {isGk ? (
         <p className="text-sm text-muted">Goleiros não entram no rateio. Obrigado por defender o gol!</p>
+      ) : !confirmed ? (
+        <>
+          <div className="text-xs text-muted">Previsão com {split.estimatedPlayers} jogadores · quadra {formatMoney(split.cost)}</div>
+          <div className="text-3xl font-extrabold">{formatMoney(split.estimatedPerPlayer)}</div>
+          <p className="mt-2 text-sm text-slate-200">{explainer} Hoje: {split.payers.length} pagante{split.payers.length === 1 ? '' : 's'} ({formatMoney(split.perPlayer)} cada, se a lista ficar assim).</p>
+          <div className="mt-3 rounded-xl bg-surface-2 px-3 py-2 text-sm text-muted ring-1 ring-line">
+            🔒 O valor final e o PIX são liberados quando o organizador confirmar o futebol.
+          </div>
+        </>
       ) : (
         <>
           <div className="flex items-end justify-between">
@@ -175,6 +186,7 @@ function PaymentCard({ group, match, me, split }: { group: Group; match: Match; 
               <div className="text-3xl font-extrabold">{formatMoney(split.perPlayer)}</div>
             </div>
           </div>
+          <p className="mt-1 text-xs text-muted">{explainer}</p>
           {hasPix ? (
             <div className="mt-3 space-y-2">
               <div className="rounded-xl bg-surface-2 px-3 py-2">
@@ -270,7 +282,7 @@ function PlayersCard({ group, match, players, members, split, isManager, open }:
             <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted">
               <Pill>{split.linePlayers.length} linha</Pill>
               <Pill tone="amber">{split.goalkeepers.length} goleiro{split.goalkeepers.length === 1 ? '' : 's'}</Pill>
-              <Pill>{formatMoney(split.perPlayer)} por jogador</Pill>
+              <Pill>{match.status === 'confirmed' ? `${formatMoney(split.perPlayer)} por jogador` : `previsão ${formatMoney(split.estimatedPerPlayer)} por jogador`}</Pill>
             </div>
           )}
         </div>

@@ -37,6 +37,17 @@ describe('custo e rateio', () => {
     const s = computeSplit({ hourlyRate: 300, durationMinutes: 60, costOverride: null }, players)
     expect(s.perPlayer).toBe(42.86)
   })
+  it('previsão usa o mínimo de jogadores do grupo enquanto a lista está pequena', () => {
+    const one = [player('a', 'available', 'line')]
+    const s = computeSplit({ hourlyRate: 200, durationMinutes: 90, costOverride: null, minPlayers: 15 }, one)
+    expect(s.perPlayer).toBe(300)
+    expect(s.estimatedPlayers).toBe(15)
+    expect(s.estimatedPerPlayer).toBe(20)
+    const many = Array.from({ length: 20 }, (_, i) => player(`l${i}`, 'available', 'line'))
+    const s2 = computeSplit({ hourlyRate: 200, durationMinutes: 90, costOverride: null, minPlayers: 15 }, many)
+    expect(s2.estimatedPlayers).toBe(20)
+    expect(s2.estimatedPerPlayer).toBe(15)
+  })
   it('sem pagantes o valor individual é zero', () => {
     const s = computeSplit({ hourlyRate: 300, durationMinutes: 60, costOverride: null }, [player('g', 'available', 'goalkeeper')])
     expect(s.perPlayer).toBe(0)
