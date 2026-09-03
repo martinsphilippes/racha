@@ -39,7 +39,7 @@ export default function Login() {
 
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-8">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 3rem)' }}>
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
         <img src="/brand/logo.webp" alt="Racha 10" className="w-72 max-w-full rounded-2xl" />
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
