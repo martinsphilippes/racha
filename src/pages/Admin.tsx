@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useGroup } from '@/hooks/useGroupContext'
 import { useAccessLogs, useAllGroups, useDirectory } from '@/hooks/usePlatform'
 import { formatDateTime } from '@/lib/format'
-import { setPlatformRole } from '@/lib/repo'
+import { deleteAccessLogs, deleteDirectoryEntry, setPlatformRole } from '@/lib/repo'
 import { PLATFORM_ROLE_LABEL } from '@/lib/platform'
 import { SPORTS } from '@/lib/types'
 import { Button, Card, LinkButton, PageHeader, Pill, SectionTitle, Spinner, Stat } from '@/components/ui'
@@ -38,6 +38,15 @@ export default function Admin() {
   }, [people, search])
   const organizers = people.filter((p) => p.platformRole === 'organizer').length
 
+  async function removeLogs(ids: string[]) {
+    if (!confirm(ids.length === 1 ? 'Apagar este registro de acesso?' : `Apagar ${ids.length} registros de acesso?`)) return
+    try { await deleteAccessLogs(ids); toast('Registros apagados') } catch (err) { toast(errorMessage(err), 'error') }
+  }
+  async function removeEntry(uid: string, name: string) {
+    if (!confirm(`Remover "${name}" do diretório? A conta de login continua existindo; a pessoa volta ao diretório se entrar de novo.`)) return
+    try { await deleteDirectoryEntry(uid); toast('Registro removido') } catch (err) { toast(errorMessage(err), 'error') }
+  }
+
   async function toggle(uid: string, current: string) {
     const next = current === 'organizer' ? 'athlete' : 'organizer'
     if (!confirm(next === 'organizer' ? 'Tornar esta pessoa organizadora? Ela poderá criar e administrar grupos.' : 'Remover a permissão de organizador?')) return
@@ -63,14 +72,17 @@ export default function Admin() {
                   <div className="truncate text-xs text-muted">{p.email}{p.lastSeenAt ? ` · último acesso ${formatDateTime(p.lastSeenAt)}` : ' · nunca acessou'}</div>
                 </div>
                 {p.platformRole === 'owner' ? <Pill tone="amber">{PLATFORM_ROLE_LABEL.owner}</Pill> : (
-                  <button
-                    type="button"
-                    onClick={() => toggle(p.uid, p.platformRole)}
-                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ring-1 ${p.platformRole === 'organizer' ? 'bg-sky-glow/20 text-sky-glow ring-sky-glow/40' : 'bg-surface-2 text-slate-200 ring-line'}`}
-                    aria-label={`${p.platformRole === 'organizer' ? 'Tornar atleta' : 'Tornar organizador'}: ${p.name}`}
-                  >
-                    {PLATFORM_ROLE_LABEL[p.platformRole]} · {p.platformRole === 'organizer' ? 'rebaixar' : 'promover'}
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => toggle(p.uid, p.platformRole)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-bold ring-1 ${p.platformRole === 'organizer' ? 'bg-sky-glow/20 text-sky-glow ring-sky-glow/40' : 'bg-surface-2 text-slate-200 ring-line'}`}
+                      aria-label={`${p.platformRole === 'organizer' ? 'Tornar atleta' : 'Tornar organizador'}: ${p.name}`}
+                    >
+                      {PLATFORM_ROLE_LABEL[p.platformRole]} · {p.platformRole === 'organizer' ? 'rebaixar' : 'promover'}
+                    </button>
+                    <Button size="sm" variant="ghost" onClick={() => removeEntry(p.uid, p.name)} aria-label={`Remover do diretório: ${p.name}`}>🗑️</Button>
+                  </div>
                 )}
               </li>
             ))}
@@ -97,12 +109,18 @@ export default function Admin() {
                     <div className="truncate font-semibold">{(l.uid && people.find((p) => p.uid === l.uid)?.name) || l.name || (l.uid ? 'Usuário' : 'Visitante sem conta')}</div>
                     <div className="truncate text-xs text-muted">{formatDateTime(l.at)} · {l.platform === 'ios' ? 'iPhone' : l.platform === 'android' ? 'Android' : 'Computador'}{l.installed ? ' · app instalado' : ' · navegador'}{l.path && l.path !== '/' ? ` · ${l.path}` : ''}</div>
                   </div>
-                  <Pill tone={l.uid ? 'blue' : 'neutral'}>{l.uid ? 'conta' : 'visitante'}</Pill>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Pill tone={l.uid ? 'blue' : 'neutral'}>{l.uid ? 'conta' : 'visitante'}</Pill>
+                    <Button size="sm" variant="ghost" onClick={() => removeLogs([l.id])} aria-label="Apagar registro">🗑️</Button>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
-          {logs.length > 20 && <Button variant="ghost" size="sm" className="w-full" onClick={() => setShowAllLogs((v) => !v)}>{showAllLogs ? 'Mostrar menos' : `Ver todos (${logs.length})`}</Button>}
+          <div className="grid grid-cols-2 gap-2">
+            {logs.length > 20 ? <Button variant="ghost" size="sm" onClick={() => setShowAllLogs((v) => !v)}>{showAllLogs ? 'Mostrar menos' : `Ver todos (${logs.length})`}</Button> : <span />}
+            {logs.length > 0 && <Button variant="ghost" size="sm" className="text-red-300" onClick={() => removeLogs(logs.map((l) => l.id))}>Apagar todos os registros</Button>}
+          </div>
         </Card>
       </section>
 

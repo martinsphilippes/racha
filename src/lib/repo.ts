@@ -92,6 +92,21 @@ export async function setPlatformRole(uid: string, platformRole: Exclude<Platfor
   await updateDoc(directoryRef(uid), { platformRole })
 }
 
+/** Dono: apaga registros de acesso (ex.: testes) e registros do diretório. */
+export async function deleteAccessLogs(ids: string[]): Promise<void> {
+  const chunks: string[][] = []
+  for (let i = 0; i < ids.length; i += 400) chunks.push(ids.slice(i, i + 400))
+  for (const chunk of chunks) {
+    const batch = writeBatch(db)
+    chunk.forEach((id) => batch.delete(doc(db, 'accessLogs', id)))
+    await batch.commit()
+  }
+}
+
+export async function deleteDirectoryEntry(uid: string): Promise<void> {
+  await deleteDoc(directoryRef(uid))
+}
+
 /** Gestor/dono adiciona um usuário do diretório ao grupo. */
 export async function addMember(gid: string, entry: Pick<DirectoryEntry, 'uid' | 'name'>, role: Member['role'], actor: Actor): Promise<void> {
   const member: Omit<Member, 'id'> = { uid: entry.uid, groupId: gid, name: entry.name, role, joinedAt: Date.now(), addedBy: actor.uid }

@@ -48,7 +48,8 @@ service cloud.firestore {
             && request.resource.data.platformRole in ['athlete', 'organizer', 'owner']
             && (request.resource.data.platformRole != 'owner' || userId == uid()))
         || (uid() == userId && changedOnly(['name', 'lastSeenAt']));
-      allow delete: if false;
+      // Dono remove registros do diretório (ex.: contas de teste), nunca o próprio.
+      allow delete: if isOwner() && userId != uid();
     }
 
     // ---------- Registro de acessos (quem abriu o app e quando) ----------
@@ -60,7 +61,8 @@ service cloud.firestore {
         && request.resource.data.deviceId is string && request.resource.data.deviceId.size() <= 40
         && request.resource.data.path is string && request.resource.data.path.size() <= 200
         && (request.resource.data.uid == null || (signedIn() && request.resource.data.uid == uid()));
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isOwner();
     }
 
     // ---------- Perfil privado ----------

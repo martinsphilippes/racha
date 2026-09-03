@@ -72,11 +72,18 @@ describe('registro de acessos', () => {
     await assertFails(setDoc(doc(ctx(PLAYER), 'accessLogs', 'a3'), entry(MANAGER)))
     await assertFails(setDoc(doc(ctx(PLAYER), 'accessLogs', 'a4'), { ...entry(PLAYER), extra: 'x' }))
   })
-  it('só o dono lê os acessos; ninguém edita', async () => {
+  it('só o dono lê e apaga os acessos; ninguém edita', async () => {
     await env.withSecurityRulesDisabled(async (c) => setDoc(doc(c.firestore(), 'accessLogs', 'a1'), entry(PLAYER)))
     await assertSucceeds(getDocs(collection(ctx(OWNER), 'accessLogs')))
     await assertFails(getDocs(collection(ctx(ORGANIZER), 'accessLogs')))
     await assertFails(updateDoc(doc(ctx(OWNER), 'accessLogs', 'a1'), { at: 2 }))
+    await assertFails(deleteDoc(doc(ctx(PLAYER), 'accessLogs', 'a1')))
+    await assertSucceeds(deleteDoc(doc(ctx(OWNER), 'accessLogs', 'a1')))
+  })
+  it('dono remove registro do diretório de outra pessoa, não o próprio; outros não removem', async () => {
+    await assertFails(deleteDoc(doc(ctx(ORGANIZER), 'directory', PLAYER)))
+    await assertFails(deleteDoc(doc(ctx(OWNER), 'directory', OWNER)))
+    await assertSucceeds(deleteDoc(doc(ctx(OWNER), 'directory', OUTSIDER)))
   })
   it('usuário atualiza o próprio último acesso no diretório', async () => {
     await assertSucceeds(updateDoc(doc(ctx(PLAYER), 'directory', PLAYER), { lastSeenAt: 5 }))
