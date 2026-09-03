@@ -82,7 +82,7 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await m.getByLabel('Endereço').fill('Arena Ituiu')
   await m.getByRole('option').first().click()
   await expect(m.getByLabel('Endereço')).toHaveValue('Arena Ituiutaba, Avenida Central, 100 - Centro, Ituiutaba - MG')
-  await expect(m.getByText('Localização marcada no mapa')).toBeVisible()
+  await expect(m.getByText('Marcado no mapa')).toBeVisible()
   await m.getByRole('button', { name: 'Salvar' }).click()
   await expect(m.getByText('📍 Arena Ituiutaba, Avenida Central, 100')).toBeVisible()
   await m.getByRole('button', { name: '+ Quadra' }).click()

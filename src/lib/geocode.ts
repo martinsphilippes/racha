@@ -82,9 +82,8 @@ export async function searchAddress(query: string, opts: { signal?: AbortSignal;
   const { text, number } = splitHouseNumber(query)
   const q = text.trim()
   if (q.length < 3) return []
-  const results = await searchRaw(q, opts)
-  // Reaproveita o número digitado quando o mapa não o conhece.
-  return results.map((r) => (number && !r.hasNumber ? { ...r, label: withHouseNumber(r.label, number), hasNumber: true } : r))
+  void number // o número digitado é reaplicado pelo componente ao escolher a sugestão
+  return searchRaw(q, opts)
 }
 
 async function searchRaw(q: string, opts: { signal?: AbortSignal; near?: { lat: number; lng: number } }): Promise<GeoResult[]> {

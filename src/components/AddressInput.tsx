@@ -38,11 +38,14 @@ export default function AddressInput({ value, coords, onChange, placeholder }: P
     }, 350)
   }
 
+  const typedNumber = splitHouseNumber(value).number
+  /** Rótulo exibido/gravado: sugestão + número digitado (quando o mapa não trouxe número). */
+  const compose = (r: GeoResult, n: string) => (r.hasNumber ? r.label : withHouseNumber(r.label, n || null))
+
   function pick(r: GeoResult) {
-    const typed = splitHouseNumber(value).number
-    const n = r.hasNumber ? '' : (number || typed || '')
+    const n = r.hasNumber ? '' : (number || typedNumber || '')
     setBase(r.label); setNumber(n)
-    onChange(withHouseNumber(r.label, n || null), { lat: r.lat, lng: r.lng })
+    onChange(compose(r, n), { lat: r.lat, lng: r.lng })
     setResults([]); setOpen(false)
   }
 
@@ -84,7 +87,7 @@ export default function AddressInput({ value, coords, onChange, placeholder }: P
           {results.map((r) => (
             <li key={`${r.lat},${r.lng},${r.label}`} role="option" aria-selected={false}>
               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(r)} className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2">
-                {r.name && r.label.startsWith(r.name) ? <><span className="font-semibold">{r.name}</span>{r.label.slice(r.name.length)}</> : r.label}
+                {(() => { const label = compose(r, number || typedNumber || ''); return r.name && label.startsWith(r.name) ? <><span className="font-semibold">{r.name}</span>{label.slice(r.name.length)}</> : label })()}
               </button>
             </li>
           ))}
