@@ -94,7 +94,7 @@ export default function Admin() {
               {(showAllLogs ? logs : logs.slice(0, 20)).map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-2 py-2">
                   <div className="min-w-0">
-                    <div className="truncate font-semibold">{l.name ?? (l.uid ? 'Usuário' : 'Visitante sem conta')}</div>
+                    <div className="truncate font-semibold">{(l.uid && people.find((p) => p.uid === l.uid)?.name) || l.name || (l.uid ? 'Usuário' : 'Visitante sem conta')}</div>
                     <div className="truncate text-xs text-muted">{formatDateTime(l.at)} · {l.platform === 'ios' ? 'iPhone' : l.platform === 'android' ? 'Android' : 'Computador'}{l.installed ? ' · app instalado' : ' · navegador'}{l.path && l.path !== '/' ? ` · ${l.path}` : ''}</div>
                   </div>
                   <Pill tone={l.uid ? 'blue' : 'neutral'}>{l.uid ? 'conta' : 'visitante'}</Pill>
