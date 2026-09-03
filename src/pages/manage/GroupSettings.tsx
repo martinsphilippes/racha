@@ -4,11 +4,12 @@ import { updateGroup, updatePix } from '@/lib/repo'
 import { PIX_KEY_TYPES, SPORTS, type PixKeyType, type Sport } from '@/lib/types'
 import { Button, Card, ErrorText, Field, PageHeader, SectionTitle, Spinner } from '@/components/ui'
 import { errorMessage, useToast } from '@/components/Toast'
+import NumberInput from '@/components/NumberInput'
 
 export default function GroupSettings() {
   const { group } = useGroup()
   const toast = useToast()
-  const [form, setForm] = useState({ name: '', sport: 'futsal' as Sport, minPlayers: 10, notes: '' })
+  const [form, setForm] = useState({ name: '', sport: 'futsal' as Sport, minPlayers: 10 as number | null, notes: '' })
   const [pix, setPix] = useState({ pixKeyType: 'cpf' as PixKeyType, pixKey: '', pixName: '', pixCity: '' })
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -25,7 +26,7 @@ export default function GroupSettings() {
     e.preventDefault()
     setBusy(true); setError('')
     try {
-      await updateGroup(group!.id, { name: form.name.trim(), sport: form.sport, minPlayers: form.minPlayers, notes: form.notes.trim() })
+      await updateGroup(group!.id, { name: form.name.trim(), sport: form.sport, minPlayers: form.minPlayers ?? 0, notes: form.notes.trim() })
       toast('Grupo salvo')
     } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
   }
@@ -59,7 +60,7 @@ export default function GroupSettings() {
               </select>
             </Field>
             <Field label="Mínimo de jogadores desejado" hint="Aplicado às novas partidas geradas">
-              <input type="number" inputMode="numeric" min={0} max={50} value={form.minPlayers} onChange={(e) => setForm({ ...form, minPlayers: Number(e.target.value) })} />
+              <NumberInput required value={form.minPlayers} onChange={(v) => setForm({ ...form, minPlayers: v })} />
             </Field>
             <Field label="Informações adicionais"><textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
             <Button type="submit" className="w-full" disabled={busy}>Salvar grupo</Button>

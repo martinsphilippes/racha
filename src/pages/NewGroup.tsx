@@ -6,13 +6,14 @@ import { createGroup } from '@/lib/repo'
 import { SPORTS, type Sport } from '@/lib/types'
 import { Button, Card, ErrorText, Field, PageHeader } from '@/components/ui'
 import { errorMessage, useToast } from '@/components/Toast'
+import NumberInput from '@/components/NumberInput'
 
 export default function NewGroup() {
   const { user, profile, canOrganize } = useAuth()
   const { setGroupId, memberships } = useGroup()
   const navigate = useNavigate()
   const toast = useToast()
-  const [form, setForm] = useState({ name: '', sport: 'futsal' as Sport, minPlayers: 10, notes: '' })
+  const [form, setForm] = useState({ name: '', sport: 'futsal' as Sport, minPlayers: 10 as number | null, notes: '' })
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [createdId, setCreatedId] = useState<string | null>(null)
@@ -31,7 +32,7 @@ export default function NewGroup() {
     if (!user) return
     setBusy(true); setError('')
     try {
-      setCreatedId(await createGroup(form, { uid: user.uid, name: profile?.name ?? user.displayName ?? 'Gestor' }))
+      setCreatedId(await createGroup({ ...form, minPlayers: form.minPlayers ?? 0 }, { uid: user.uid, name: profile?.name ?? user.displayName ?? 'Gestor' }))
     } catch (err) {
       setError(errorMessage(err))
       setBusy(false)
@@ -59,7 +60,7 @@ export default function NewGroup() {
             </select>
           </Field>
           <Field label="Mínimo de jogadores desejado" hint="Usado para mostrar quantos ainda faltam confirmar">
-            <input type="number" inputMode="numeric" min={0} max={50} value={form.minPlayers} onChange={(e) => setForm({ ...form, minPlayers: Number(e.target.value) })} />
+            <NumberInput required value={form.minPlayers} onChange={(v) => setForm({ ...form, minPlayers: v })} placeholder="Ex.: 10" />
           </Field>
           <Field label="Informações adicionais (opcional)"><textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
           <ErrorText>{error}</ErrorText>

@@ -14,6 +14,7 @@ import { POSITIONS, type Match, type MatchPlayer, type Member, type Position } f
 import { Button, Card, EmptyState, Field, PageHeader, Pill, SectionTitle, Spinner, Stat } from '@/components/ui'
 import { StatusPill } from '@/components/MatchView'
 import { errorMessage, useToast } from '@/components/Toast'
+import NumberInput from '@/components/NumberInput'
 import MatchForm from './MatchForm'
 
 export default function ManageMatch() {
@@ -154,13 +155,14 @@ function TeamsSection({ match, players, split }: { match: Match; players: MatchP
   const { group } = useGroup()
   const toast = useToast()
   const [mode, setMode] = useState<'numTeams' | 'perTeam'>('numTeams')
-  const [value, setValue] = useState(2)
+  const [value, setValue] = useState<number | null>(2)
   const byId = new Map(players.map((p) => [p.id, p]))
   const available = split.available
   const unassigned = unassignedPlayers(match.teams, available.map((p) => p.id))
 
   async function generate() {
-    const teams = generateTeams(available.map((p) => ({ id: p.id, name: p.name, position: p.position })), mode === 'numTeams' ? { numTeams: value } : { playersPerTeam: value })
+    const n = Math.max(1, value ?? 1)
+    const teams = generateTeams(available.map((p) => ({ id: p.id, name: p.name, position: p.position })), mode === 'numTeams' ? { numTeams: n } : { playersPerTeam: n })
     try { await saveTeams(group!.id, match.id, teams); toast('Times sorteados!') } catch (err) { toast(errorMessage(err), 'error') }
   }
   async function move(playerId: string, toTeamId: string) {
@@ -187,7 +189,7 @@ function TeamsSection({ match, players, split }: { match: Match; players: MatchP
             </select>
           </Field>
           <Field label={mode === 'numTeams' ? 'Times' : 'Por time'}>
-            <input type="number" inputMode="numeric" min={1} max={20} value={value} onChange={(e) => setValue(Math.max(1, Number(e.target.value)))} />
+            <NumberInput required value={value} onChange={(v) => setValue(v)} />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-2">

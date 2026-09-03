@@ -63,7 +63,13 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await expect(m.getByRole('link', { name: 'CRIAR MEU GRUPO' })).toBeVisible()
   await m.getByRole('link', { name: 'CRIAR MEU GRUPO' }).click()
   await m.getByLabel('Nome do grupo').fill('Futsal de terça')
-  await m.getByLabel('Mínimo de jogadores desejado').fill('2')
+  // Campo numérico: apagar tudo e digitar não pode virar "015"
+  const min = m.getByLabel('Mínimo de jogadores desejado')
+  await min.click(); await min.press('End'); await min.press('Backspace'); await min.press('Backspace')
+  await expect(min).toHaveValue('')
+  await min.pressSequentially('15')
+  await expect(min).toHaveValue('15')
+  await min.fill('2')
   await m.getByRole('button', { name: 'CRIAR GRUPO' }).click()
   await expect(m).toHaveURL(/\/manage\/venues/)
 

@@ -5,6 +5,7 @@ import { formatMoney, todayString } from '@/lib/format'
 import type { MatchInput } from '@/lib/repo'
 import type { Match } from '@/lib/types'
 import { Button, Field } from '@/components/ui'
+import NumberInput from '@/components/NumberInput'
 
 export default function MatchForm({ match, onSubmit, submitLabel, busy }: {
   match: Partial<Match> | null
@@ -18,21 +19,21 @@ export default function MatchForm({ match, onSubmit, submitLabel, busy }: {
   const [form, setForm] = useState({
     date: match?.date ?? todayString(),
     startTime: match?.startTime ?? group?.startTime ?? '19:30',
-    durationMinutes: match?.durationMinutes ?? group?.durationMinutes ?? 90,
+    durationMinutes: (match?.durationMinutes ?? group?.durationMinutes ?? 90) as number | null,
     venueId: match?.venueId ?? group?.defaultVenueId ?? '',
     courtId: match?.courtId ?? group?.defaultCourtId ?? '',
     costOverride: match?.costOverride ?? null as number | null,
-    minPlayers: match?.minPlayers ?? group?.minPlayers ?? 10,
+    minPlayers: (match?.minPlayers ?? group?.minPlayers ?? 10) as number | null,
   })
   const venueId = venues.some((v) => v.id === form.venueId) ? form.venueId : venues[0]?.id ?? ''
   const venueCourts = courts.filter((c) => c.venueId === venueId)
   const courtId = venueCourts.some((c) => c.id === form.courtId) ? form.courtId : venueCourts[0]?.id ?? ''
   const court = courts.find((c) => c.id === courtId)
-  const autoCost = court ? (court.hourlyRate * form.durationMinutes) / 60 : 0
+  const autoCost = court ? (court.hourlyRate * (form.durationMinutes ?? 0)) / 60 : 0
 
   function submit(e: FormEvent) {
     e.preventDefault()
-    onSubmit({ ...form, venueId: venueId || null, courtId: courtId || null })
+    onSubmit({ ...form, durationMinutes: form.durationMinutes ?? 90, minPlayers: form.minPlayers ?? 0, venueId: venueId || null, courtId: courtId || null })
   }
 
   return (
@@ -42,8 +43,8 @@ export default function MatchForm({ match, onSubmit, submitLabel, busy }: {
         <Field label="Início"><input type="time" required value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} /></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Duração (min)"><input type="number" inputMode="numeric" min={30} step={15} required value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })} /></Field>
-        <Field label="Mínimo de jogadores"><input type="number" inputMode="numeric" min={0} value={form.minPlayers} onChange={(e) => setForm({ ...form, minPlayers: Number(e.target.value) })} /></Field>
+        <Field label="Duração (min)"><NumberInput required value={form.durationMinutes} onChange={(v) => setForm({ ...form, durationMinutes: v })} /></Field>
+        <Field label="Mínimo de jogadores"><NumberInput required value={form.minPlayers} onChange={(v) => setForm({ ...form, minPlayers: v })} /></Field>
       </div>
       <Field label="Local">
         <select value={venueId} onChange={(e) => setForm({ ...form, venueId: e.target.value, courtId: '' })}>
@@ -58,7 +59,7 @@ export default function MatchForm({ match, onSubmit, submitLabel, busy }: {
         </select>
       </Field>
       <Field label="Custo da partida (R$)" hint={`Automático: ${formatMoney(autoCost)}. Preencha apenas para definir um valor manual.`}>
-        <input type="number" inputMode="decimal" min={0} step="0.01" value={form.costOverride ?? ''} placeholder={autoCost.toFixed(2)} onChange={(e) => setForm({ ...form, costOverride: e.target.value === '' ? null : Number(e.target.value) })} />
+        <NumberInput decimal value={form.costOverride} placeholder={autoCost.toFixed(2)} onChange={(v) => setForm({ ...form, costOverride: v })} />
       </Field>
       <Button type="submit" className="w-full" disabled={busy}>{submitLabel}</Button>
     </form>

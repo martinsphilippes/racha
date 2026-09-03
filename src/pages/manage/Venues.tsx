@@ -6,6 +6,7 @@ import { formatMoney } from '@/lib/format'
 import { SPORTS, type Court, type Sport, type Venue } from '@/lib/types'
 import { Button, Card, EmptyState, Field, PageHeader, Pill, SectionTitle, Spinner } from '@/components/ui'
 import { errorMessage, useToast } from '@/components/Toast'
+import NumberInput from '@/components/NumberInput'
 
 export default function Venues() {
   const { group, groupId } = useGroup()
@@ -100,11 +101,11 @@ function VenueForm({ groupId, venue, onClose }: { groupId: string; venue: Partia
 
 function CourtForm({ groupId, court, defaultSport, onClose }: { groupId: string; court: Partial<Court>; defaultSport: Sport; onClose: () => void }) {
   const toast = useToast()
-  const [form, setForm] = useState({ name: court.name ?? '', sport: court.sport ?? defaultSport, hourlyRate: court.hourlyRate ?? 0, notes: court.notes ?? '' })
+  const [form, setForm] = useState({ name: court.name ?? '', sport: court.sport ?? defaultSport, hourlyRate: (court.hourlyRate ?? null) as number | null, notes: court.notes ?? '' })
   const [busy, setBusy] = useState(false)
   async function submit(e: FormEvent) {
     e.preventDefault(); setBusy(true)
-    try { await saveCourt(groupId, { ...court, venueId: court.venueId!, ...form }); toast('Quadra salva'); onClose() } catch (err) { toast(errorMessage(err), 'error') } finally { setBusy(false) }
+    try { await saveCourt(groupId, { ...court, venueId: court.venueId!, ...form, hourlyRate: form.hourlyRate ?? 0 }); toast('Quadra salva'); onClose() } catch (err) { toast(errorMessage(err), 'error') } finally { setBusy(false) }
   }
   return (
     <Card className="border-2 border-flame-500">
@@ -116,7 +117,7 @@ function CourtForm({ groupId, court, defaultSport, onClose }: { groupId: string;
             {SPORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </Field>
-        <Field label="Valor por hora (R$)"><input type="number" inputMode="decimal" min={0} step="0.01" required value={form.hourlyRate} onChange={(e) => setForm({ ...form, hourlyRate: Number(e.target.value) })} /></Field>
+        <Field label="Valor por hora (R$)"><NumberInput decimal required value={form.hourlyRate} onChange={(v) => setForm({ ...form, hourlyRate: v })} placeholder="Ex.: 200" /></Field>
         <Field label="Observações"><input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>

@@ -7,6 +7,7 @@ import { formatDuration, formatMoney, formatTimeRange, WEEKDAYS } from '@/lib/fo
 import type { Schedule } from '@/lib/types'
 import { Button, Card, EmptyState, Field, LinkButton, PageHeader, Pill, Spinner } from '@/components/ui'
 import { errorMessage, useToast } from '@/components/Toast'
+import NumberInput from '@/components/NumberInput'
 
 export default function SchedulePage() {
   const { user } = useAuth()
@@ -78,10 +79,10 @@ function ScheduleForm({ schedule, onClose }: { schedule: Partial<Schedule>; onCl
   const [form, setForm] = useState({
     weekday: schedule.weekday ?? 2,
     startTime: schedule.startTime ?? '19:30',
-    durationMinutes: schedule.durationMinutes ?? 90,
+    durationMinutes: (schedule.durationMinutes ?? 90) as number | null,
     venueId: schedule.venueId ?? venues[0]?.id ?? '',
     courtId: schedule.courtId ?? '',
-    weeksAhead: schedule.weeksAhead ?? 4,
+    weeksAhead: (schedule.weeksAhead ?? 4) as number | null,
   })
   const [busy, setBusy] = useState(false)
   const venueCourts = courts.filter((c) => c.venueId === (form.venueId || venues[0]?.id))
@@ -92,7 +93,7 @@ function ScheduleForm({ schedule, onClose }: { schedule: Partial<Schedule>; onCl
     if (!group || !user || !courtId) return
     setBusy(true)
     try {
-      const input = { ...form, venueId: form.venueId || venues[0]?.id, courtId }
+      const input = { ...form, durationMinutes: form.durationMinutes ?? 90, weeksAhead: form.weeksAhead ?? 4, venueId: form.venueId || venues[0]?.id, courtId }
       const id = await saveSchedule(group.id, input, schedule.id)
       const n = await ensureUpcomingMatches(group, { ...input, id, active: true, createdAt: Date.now() }, venues, courts, user.uid)
       toast(n ? `Agenda salva · ${n} partida${n === 1 ? '' : 's'} gerada${n === 1 ? '' : 's'}` : 'Agenda salva')
@@ -111,7 +112,7 @@ function ScheduleForm({ schedule, onClose }: { schedule: Partial<Schedule>; onCl
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Início"><input type="time" required value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} /></Field>
-          <Field label="Duração (min)"><input type="number" inputMode="numeric" min={30} step={15} required value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })} /></Field>
+          <Field label="Duração (min)"><NumberInput required value={form.durationMinutes} onChange={(v) => setForm({ ...form, durationMinutes: v })} /></Field>
         </div>
         <Field label="Local">
           <select value={form.venueId || venues[0]?.id || ''} onChange={(e) => setForm({ ...form, venueId: e.target.value, courtId: '' })}>
@@ -123,7 +124,7 @@ function ScheduleForm({ schedule, onClose }: { schedule: Partial<Schedule>; onCl
             {venueCourts.map((c) => <option key={c.id} value={c.id}>{c.name} · {formatMoney(c.hourlyRate)}/h</option>)}
           </select>
         </Field>
-        <Field label="Semanas geradas à frente"><input type="number" inputMode="numeric" min={1} max={12} value={form.weeksAhead} onChange={(e) => setForm({ ...form, weeksAhead: Number(e.target.value) })} /></Field>
+        <Field label="Semanas geradas à frente"><NumberInput required value={form.weeksAhead} onChange={(v) => setForm({ ...form, weeksAhead: v })} /></Field>
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
           <Button type="submit" disabled={busy || !courtId}>Salvar e gerar</Button>
