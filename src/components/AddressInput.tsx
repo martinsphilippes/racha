@@ -93,7 +93,7 @@ export default function AddressInput({ value, coords, onChange, placeholder }: P
           ))}
         </ul>
       )}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-3">
         <label className="flex items-center gap-2 text-sm text-muted">
           <span className="whitespace-nowrap">Nº</span>
           <input
@@ -106,11 +106,11 @@ export default function AddressInput({ value, coords, onChange, placeholder }: P
             className="w-24"
           />
         </label>
-        <span className={`flex-1 text-xs ${coords ? 'text-green-300' : 'text-muted'}`}>
-          {busy ? 'Buscando…' : coords ? '📍 Marcado no mapa' : 'Escolha uma sugestão e depois informe o número'}
-        </span>
-        <button type="button" onClick={useMyLocation} className="whitespace-nowrap text-xs font-semibold text-gold-400">Usar minha localização</button>
+        <button type="button" onClick={useMyLocation} className="whitespace-nowrap text-xs font-semibold text-gold-400">📡 Usar minha localização</button>
       </div>
+      <p className={`text-xs ${coords ? 'text-green-300' : 'text-muted'}`}>
+        {busy ? 'Buscando…' : coords ? '📍 Marcado no mapa' : 'Escolha uma sugestão e depois informe o número'}
+      </p>
     </div>
   )
 }
