@@ -47,8 +47,8 @@ export default function Venues() {
                 {v.notes && <div className="text-xs text-muted">{v.notes}</div>}
               </div>
               <div className="flex gap-1">
-                <Button size="sm" variant="ghost" onClick={() => setEditingVenue(v)}>Editar</Button>
-                <Button size="sm" variant="ghost" onClick={() => removeVenue(v)}>🗑️</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingVenue(v)} aria-label={`Editar local ${v.name}`}>Editar</Button>
+                <Button size="sm" variant="ghost" onClick={() => removeVenue(v)} aria-label={`Excluir local ${v.name}`}>🗑️</Button>
               </div>
             </div>
             <div>
@@ -61,8 +61,8 @@ export default function Venues() {
                       <div className="text-sm text-muted">{formatMoney(c.hourlyRate)} / hora{c.notes ? ` · ${c.notes}` : ''}</div>
                     </div>
                     <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => setEditingCourt(c)}>Editar</Button>
-                      <Button size="sm" variant="ghost" onClick={() => removeCourt(c)}>🗑️</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingCourt(c)} aria-label={`Editar quadra ${c.name}`}>Editar</Button>
+                      <Button size="sm" variant="ghost" onClick={() => removeCourt(c)} aria-label={`Excluir quadra ${c.name}`}>🗑️</Button>
                     </div>
                   </li>
                 ))}

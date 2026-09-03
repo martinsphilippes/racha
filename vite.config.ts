@@ -5,9 +5,17 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 
 import pkg from './package.json' with { type: 'json' }
+import { execSync } from 'node:child_process'
+
+// Identificador da versão publicada: commit curto (Vercel expõe VERCEL_GIT_COMMIT_SHA).
+function buildId(): string {
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA
+  if (sha) return sha.slice(0, 7)
+  try { return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() } catch { return 'dev' }
+}
 
 export default defineConfig({
-  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  define: { __APP_VERSION__: JSON.stringify(`${pkg.version}+${buildId()}`) },
   plugins: [
     react(),
     tailwindcss(),
