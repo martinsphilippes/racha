@@ -85,6 +85,17 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await expect(m.getByText('Marcado no mapa')).toBeVisible()
   await m.getByRole('button', { name: 'Salvar' }).click()
   await expect(m.getByText('📍 Arena Ituiutaba, Avenida Central, 100')).toBeVisible()
+  // Editar o local: o número gravado aparece no campo Nº e pode ser alterado sem perder a marcação
+  await m.getByRole('button', { name: 'Editar' }).first().click()
+  await expect(m.getByLabel('Número')).toHaveValue('100')
+  await m.getByLabel('Número').fill('120')
+  await expect(m.getByLabel('Endereço')).toHaveValue('Arena Ituiutaba, Avenida Central, 120 - Centro, Ituiutaba - MG')
+  await expect(m.getByText('Marcado no mapa')).toBeVisible()
+  await m.getByRole('button', { name: 'Salvar' }).click()
+  await expect(m.getByText('📍 Arena Ituiutaba, Avenida Central, 120')).toBeVisible()
+  await m.getByRole('button', { name: 'Editar' }).first().click()
+  await expect(m.getByLabel('Número')).toHaveValue('120')
+  await m.getByRole('button', { name: 'Cancelar' }).click()
   await m.getByRole('button', { name: '+ Quadra' }).click()
   await m.getByLabel('Nome da quadra').fill('Futsal 1')
   await m.getByLabel('Valor por hora (R$)').fill('200')
@@ -116,8 +127,8 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await expect(a.getByRole('link', { name: 'Gestão' })).toHaveCount(0)
   // Como chegar: links com as coordenadas do local escolhido
   // Endereço com número: os links usam o texto (mais preciso que a coordenada da rua)
-  await expect(a.getByRole('link', { name: /Como chegar/ })).toHaveAttribute('href', /destination=Arena%20Ituiutaba%2C%20Avenida%20Central%2C%20100/)
-  await expect(a.getByRole('link', { name: /Waze/ })).toHaveAttribute('href', /q=Arena%20Ituiutaba%2C%20Avenida%20Central%2C%20100/)
+  await expect(a.getByRole('link', { name: /Como chegar/ })).toHaveAttribute('href', /destination=Arena%20Ituiutaba%2C%20Avenida%20Central%2C%20120/)
+  await expect(a.getByRole('link', { name: /Waze/ })).toHaveAttribute('href', /q=Arena%20Ituiutaba%2C%20Avenida%20Central%2C%20120/)
   await a.goto('/manage')
   await expect(a).toHaveURL(/\/$/)
 

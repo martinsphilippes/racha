@@ -30,6 +30,16 @@ export function withHouseNumber(label: string, number: string | null): string {
   return `${head}, ${number}${tail}`
 }
 
+/** "Rua X, 657 - Bairro, Cidade - UF" → { base: "Rua X - Bairro, Cidade - UF", number: "657" } */
+export function extractHouseNumber(address: string): { base: string; number: string | null } {
+  const idx = address.indexOf(' - ')
+  const head = idx >= 0 ? address.slice(0, idx) : address
+  const tail = idx >= 0 ? address.slice(idx) : ''
+  const m = head.match(/^(.*?),\s*(\d{1,6}[a-zA-Z]?)$/)
+  if (!m) return { base: address, number: null }
+  return { base: `${m[1]}${tail}`, number: m[2] }
+}
+
 export function hasHouseNumber(address: string): boolean {
   return /,\s*\d{1,6}[a-zA-Z]?(\s*-|$)/.test(address)
 }

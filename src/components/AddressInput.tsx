@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { reverseGeocode, searchAddress, splitHouseNumber, withHouseNumber, type GeoResult } from '@/lib/geocode'
+import { extractHouseNumber, reverseGeocode, searchAddress, splitHouseNumber, withHouseNumber, type GeoResult } from '@/lib/geocode'
 import { useToast } from './Toast'
 
 interface Props {
@@ -18,8 +18,10 @@ export default function AddressInput({ value, coords, onChange, placeholder }: P
   const [results, setResults] = useState<GeoResult[]>([])
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [base, setBase] = useState<string | null>(null) // sugestão escolhida (sem número)
-  const [number, setNumber] = useState('')
+  // Ao editar um local já salvo, reconhece rua-base e número do endereço gravado.
+  const initial = extractHouseNumber(value)
+  const [base, setBase] = useState<string | null>(value ? initial.base : null) // sugestão escolhida (sem número)
+  const [number, setNumber] = useState(initial.number ?? '')
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const abort = useRef<AbortController | null>(null)
   const toast = useToast()

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatPhoton, googleMapsUrl, hasHouseNumber, splitHouseNumber, wazeUrl, withHouseNumber } from './geocode'
+import { extractHouseNumber, formatPhoton, googleMapsUrl, hasHouseNumber, splitHouseNumber, wazeUrl, withHouseNumber } from './geocode'
 
 describe('formatação de endereço', () => {
   it('estabelecimento com rua, bairro, cidade e UF', () => {
@@ -37,6 +37,11 @@ describe('número do endereço', () => {
     expect(withHouseNumber('Avenida Central, 100 - Centro, Ituiutaba - MG', '657')).toBe('Avenida Central, 100 - Centro, Ituiutaba - MG')
     expect(hasHouseNumber('Avenida Geraldo Alves Tavares, 657 - Ipiranga, Ituiutaba - MG')).toBe(true)
     expect(hasHouseNumber('Avenida Geraldo Alves Tavares - Ipiranga, Ituiutaba - MG')).toBe(false)
+  })
+  it('separa rua-base e número de um endereço gravado (para edição)', () => {
+    expect(extractHouseNumber('Avenida Geraldo Alves Tavares, 657 - Ipiranga, Ituiutaba - MG')).toEqual({ base: 'Avenida Geraldo Alves Tavares - Ipiranga, Ituiutaba - MG', number: '657' })
+    expect(extractHouseNumber('Avenida Geraldo Alves Tavares - Ipiranga, Ituiutaba - MG')).toEqual({ base: 'Avenida Geraldo Alves Tavares - Ipiranga, Ituiutaba - MG', number: null })
+    expect(withHouseNumber(extractHouseNumber('Rua A, 10 - Centro, X - MG').base, '20')).toBe('Rua A, 20 - Centro, X - MG')
   })
   it('com número, os links usam o endereço em texto (mais preciso)', () => {
     const d = { lat: -18.9, lng: -49.4, address: 'Avenida Geraldo Alves Tavares, 657 - Ipiranga, Ituiutaba - MG' }
