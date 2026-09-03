@@ -8,8 +8,8 @@ import { Button, Card, EmptyState, LinkButton, SectionTitle, Spinner } from '@/c
 import MatchView, { AnnouncementCards } from '@/components/MatchView'
 
 export default function Home() {
-  const { profile, canOrganize, isOwner } = useAuth()
-  const { memberships, membershipsLoading, membershipsError, group, groupId, groupLoading, isManager, setGroupId } = useGroup()
+  const { profile, canOrganize, isOwner, roleReady } = useAuth()
+  const { memberships, membershipsSynced, membershipsError, group, groupId, groupLoading, isManager, setGroupId } = useGroup()
   useAutoGenerateMatches()
   const { match, loading: matchLoading } = useNextMatch(groupId)
   const { data: upcoming } = useUpcomingMatches(groupId)
@@ -18,11 +18,12 @@ export default function Home() {
   const { data: announcements } = useAnnouncements(groupId)
   const groupNames = useGroupNames(memberships.map((m) => m.groupId))
 
-  if (membershipsLoading) return <Spinner />
-
   if (membershipsError) return <SetupError error={membershipsError} />
 
-  if (memberships.length === 0) {
+  if (memberships.length === 0 && !membershipsSynced && !groupId) return <MatchSkeleton />
+
+  if (memberships.length === 0 && membershipsSynced) {
+    if (!roleReady) return <Spinner />
     return (
       <div className="space-y-4 pt-2">
         <div className="text-center">
@@ -48,7 +49,7 @@ export default function Home() {
     )
   }
 
-  if (groupLoading || !group) return <Spinner />
+  if (groupLoading || !group) return <MatchSkeleton />
 
   const others = upcoming.filter((m) => m.id !== match?.id && (m.status === 'open' || m.status === 'confirmed')).slice(0, 4)
 
@@ -60,7 +61,7 @@ export default function Home() {
         </select>
       )}
 
-      {matchLoading ? <Spinner /> : match ? (
+      {matchLoading ? <MatchSkeleton /> : match ? (
         <MatchView group={group} match={match} players={players} members={members} announcements={announcements} isManager={isManager} />
       ) : (
         <>
@@ -125,5 +126,23 @@ function SetupError({ error }: { error: Error }) {
       <details className="text-xs text-muted"><summary>Detalhes técnicos</summary><pre className="mt-1 whitespace-pre-wrap break-all">{error.message}</pre></details>
       <Button variant="outline" className="w-full" onClick={() => location.reload()}>Tentar novamente</Button>
     </Card>
+  )
+}
+
+/** Esqueleto do cartão principal: evita "spinner em cascata" enquanto os dados chegam. */
+function MatchSkeleton() {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-label="Carregando">
+      <div className="glow-card animate-pulse rounded-2xl bg-gradient-to-br from-navy-800 via-navy-900 to-navy-950 p-4">
+        <div className="mb-3 h-3 w-24 rounded bg-white/10" />
+        <div className="mb-2 h-7 w-3/4 rounded bg-white/10" />
+        <div className="mb-3 h-5 w-1/2 rounded bg-white/10" />
+        <div className="h-4 w-2/3 rounded bg-white/10" />
+      </div>
+      <div className="animate-pulse rounded-2xl bg-surface p-4 ring-1 ring-line/60">
+        <div className="mx-auto mb-3 h-6 w-40 rounded bg-white/10" />
+        <div className="grid grid-cols-2 gap-3"><div className="h-16 rounded-2xl bg-white/10" /><div className="h-16 rounded-2xl bg-white/10" /></div>
+      </div>
+    </div>
   )
 }

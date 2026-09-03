@@ -82,8 +82,8 @@ function PlayersSection({ match, players, members, open }: { match: Match; playe
   const { group } = useGroup()
   const toast = useToast()
   const byId = new Map(players.map((p) => [p.id, p]))
-  async function set(m: Member, status: 'available' | 'unavailable', position: Position | null) {
-    try { await managerSetPlayer(group!.id, match.id, m, status, position) } catch (err) { toast(errorMessage(err), 'error') }
+  function set(m: Member, status: 'available' | 'unavailable', position: Position | null) {
+    managerSetPlayer(group!.id, match.id, m, status, position, byId.has(m.uid)).catch((err) => toast(errorMessage(err), 'error'))
   }
   return (
     <section id="players">

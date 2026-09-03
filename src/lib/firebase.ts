@@ -4,7 +4,7 @@ import {
   connectFirestoreEmulator,
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager,
+  persistentSingleTabManager,
 } from 'firebase/firestore'
 // Configuração pública do Firebase Web SDK (gerada por `npm run setup:firebase`).
 // Não é segredo: a segurança vem da autenticação + regras do Firestore.
@@ -31,8 +31,9 @@ export const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 // Cache local persistente: a tela abre instantaneamente com os últimos dados
 // e o Firestore sincroniza em tempo real assim que houver rede.
+// Aba única: inicializa mais rápido no celular (sem coordenação entre abas).
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({ forceOwnership: true }) }),
 })
 
 if (useEmulators) {

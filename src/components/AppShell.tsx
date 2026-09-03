@@ -16,7 +16,7 @@ export default function AppShell() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col">
       <header className="flex items-center justify-center pt-3">
-        <img src="/brand/logo.webp" alt="Racha 10" className="h-14 w-auto drop-shadow-[0_4px_12px_rgba(37,99,235,0.45)]" />
+        <img src="/brand/logo-sm.webp" alt="Racha 10" width={84} height={56} className="h-14 w-auto drop-shadow-[0_4px_12px_rgba(37,99,235,0.45)]" />
       </header>
       <main className="flex-1 px-4 pb-24 pt-3">
         <Outlet />

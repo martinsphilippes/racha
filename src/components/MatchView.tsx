@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDateLong, formatDateTime, formatMoney, formatTimeRange, shortName } from '@/lib/format'
@@ -97,18 +97,14 @@ function DirectionsButtons({ match }: { match: Match }) {
 function AvailabilityCard({ group, match, me }: { group: Group; match: Match; me: MatchPlayer | null }) {
   const { user, profile } = useAuth()
   const toast = useToast()
-  const [busy, setBusy] = useState(false)
+  const busy = false // gravações são otimistas: a tela responde no toque, sem travar os botões
   const positions = POSITIONS.filter((p) => POSITIONS_BY_SPORT[match.sport ?? group.sport].includes(p.value))
 
-  async function answer(status: 'available' | 'unavailable', position?: Position | null) {
+  function answer(status: 'available' | 'unavailable', position?: Position | null) {
     if (!user) return
-    setBusy(true)
-    try {
-      const pos = status === 'available' ? (position ?? me?.position ?? 'line') : null
-      await setAvailability(group.id, match.id, { uid: user.uid, name: profile?.name ?? user.displayName ?? 'Atleta' }, status, pos)
-    } catch (err) {
-      toast(errorMessage(err), 'error')
-    } finally { setBusy(false) }
+    const pos = status === 'available' ? (position ?? me?.position ?? 'line') : null
+    setAvailability(group.id, match.id, { uid: user.uid, name: profile?.name ?? user.displayName ?? 'Atleta' }, status, pos, Boolean(me))
+      .catch((err) => toast(errorMessage(err), 'error'))
   }
 
   return (

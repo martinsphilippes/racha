@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { GroupProvider, useGroup } from '@/hooks/useGroupContext'
@@ -9,18 +10,18 @@ import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
 import Home from '@/pages/Home'
 import MatchPage from '@/pages/MatchPage'
-import History from '@/pages/History'
-import Profile from '@/pages/Profile'
-import NewGroup from '@/pages/NewGroup'
-import Admin from '@/pages/Admin'
-import Dashboard from '@/pages/manage/Dashboard'
-import GroupSettings from '@/pages/manage/GroupSettings'
-import Venues from '@/pages/manage/Venues'
-import SchedulePage from '@/pages/manage/Schedule'
-import Members from '@/pages/manage/Members'
-import Announcements from '@/pages/manage/Announcements'
-import NewMatch from '@/pages/manage/NewMatch'
-import ManageMatch from '@/pages/manage/ManageMatch'
+const History = lazy(() => import('@/pages/History'))
+const Profile = lazy(() => import('@/pages/Profile'))
+const NewGroup = lazy(() => import('@/pages/NewGroup'))
+const Admin = lazy(() => import('@/pages/Admin'))
+const Dashboard = lazy(() => import('@/pages/manage/Dashboard'))
+const GroupSettings = lazy(() => import('@/pages/manage/GroupSettings'))
+const Venues = lazy(() => import('@/pages/manage/Venues'))
+const SchedulePage = lazy(() => import('@/pages/manage/Schedule'))
+const Members = lazy(() => import('@/pages/manage/Members'))
+const Announcements = lazy(() => import('@/pages/manage/Announcements'))
+const NewMatch = lazy(() => import('@/pages/manage/NewMatch'))
+const ManageMatch = lazy(() => import('@/pages/manage/ManageMatch'))
 
 function RequireAuth() {
   const { user, loading } = useAuth()
@@ -38,24 +39,25 @@ function RedirectIfAuth() {
 }
 
 function RequireManager() {
-  const { isManager, membershipsLoading, groupLoading } = useGroup()
-  if (membershipsLoading || groupLoading) return <Spinner />
-  if (!isManager) return <Navigate to="/" replace />
-  return <Outlet />
+  const { isManager, membershipsSynced, groupLoading } = useGroup()
+  if (isManager) return <Outlet />
+  // Só redireciona depois que o servidor confirmou a lista de grupos (o cache pode estar incompleto).
+  if (!membershipsSynced || groupLoading) return <Spinner />
+  return <Navigate to="/" replace />
 }
 
 function RequireOwner() {
-  const { isOwner, loading } = useAuth()
-  if (loading) return <Spinner />
+  const { isOwner, roleReady } = useAuth()
+  if (!roleReady) return <Spinner />
   if (!isOwner) return <Navigate to="/" replace />
   return <Outlet />
 }
 
 function RequireGroup() {
-  const { memberships, membershipsLoading } = useGroup()
-  if (membershipsLoading) return <Spinner />
-  if (memberships.length === 0) return <Navigate to="/" replace />
-  return <Outlet />
+  const { memberships, membershipsSynced } = useGroup()
+  if (memberships.length > 0) return <Outlet />
+  if (!membershipsSynced) return <Spinner />
+  return <Navigate to="/" replace />
 }
 
 function NotConfigured() {
@@ -73,6 +75,7 @@ export default function App() {
     <ToastProvider>
       <AuthProvider>
         <GroupProvider>
+          <Suspense fallback={<Spinner />}>
           <Routes>
             <Route element={<RedirectIfAuth />}>
               <Route path="/login" element={<Login />} />
@@ -104,6 +107,7 @@ export default function App() {
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
         </GroupProvider>
       </AuthProvider>
     </ToastProvider>

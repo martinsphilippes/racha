@@ -5,6 +5,8 @@ interface State<T> {
   data: T
   loading: boolean
   error: Error | null
+  /** true depois do primeiro snapshot confirmado pelo servidor (o do cache pode estar incompleto). */
+  synced: boolean
 }
 
 interface Options {
@@ -30,24 +32,25 @@ function isPermissionDenied(error: unknown): boolean {
  * uma permissão acabou de ser concedida (ex.: entrada em um grupo) e ainda não propagou.
  */
 export function useCollection<T>(makeQuery: () => Query | null, deps: DependencyList, options: Options = {}): State<T[]> {
-  const [state, setState] = useState<State<T[]>>({ data: [], loading: true, error: null })
+  const [state, setState] = useState<State<T[]>>({ data: [], loading: true, error: null, synced: false })
   useEffect(() => {
     const q = makeQuery()
     if (!q) {
-      setState({ data: [], loading: false, error: null })
+      // Sem consulta (ex.: usuário ainda não autenticado): nada carregado nem sincronizado.
+      setState({ data: [], loading: false, error: null, synced: false })
       return
     }
-    setState((s) => ({ ...s, loading: true }))
+    setState((s) => ({ ...s, loading: true, synced: false }))
     let unsubscribe = () => {}
     let timer: ReturnType<typeof setTimeout> | undefined
     let attempts = 0
     const subscribe = () => {
       unsubscribe = onSnapshot(
         q,
-        { includeMetadataChanges: Boolean(options.serverOnly) },
+        { includeMetadataChanges: true },
         (snap) => {
           if (options.serverOnly && snap.metadata.hasPendingWrites) return
-          setState({ data: snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T), loading: false, error: null })
+          setState((s) => ({ data: snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T), loading: false, error: null, synced: s.synced || !snap.metadata.fromCache }))
         },
         (error) => {
           if (isPermissionDenied(error) && attempts < MAX_RETRIES) {
@@ -56,7 +59,7 @@ export function useCollection<T>(makeQuery: () => Query | null, deps: Dependency
             return
           }
           if (import.meta.env.DEV) console.error('[firestore:collection]', error)
-          setState({ data: [], loading: false, error })
+          setState({ data: [], loading: false, error, synced: true })
         },
       )
     }
@@ -68,24 +71,24 @@ export function useCollection<T>(makeQuery: () => Query | null, deps: Dependency
 }
 
 export function useDocument<T>(makeRef: () => DocumentReference | null, deps: DependencyList, options: Options = {}): State<T | null> {
-  const [state, setState] = useState<State<T | null>>({ data: null, loading: true, error: null })
+  const [state, setState] = useState<State<T | null>>({ data: null, loading: true, error: null, synced: false })
   useEffect(() => {
     const ref = makeRef()
     if (!ref) {
-      setState({ data: null, loading: false, error: null })
+      setState({ data: null, loading: false, error: null, synced: false })
       return
     }
-    setState((s) => ({ ...s, loading: true }))
+    setState((s) => ({ ...s, loading: true, synced: false }))
     let unsubscribe = () => {}
     let timer: ReturnType<typeof setTimeout> | undefined
     let attempts = 0
     const subscribe = () => {
       unsubscribe = onSnapshot(
         ref,
-        { includeMetadataChanges: Boolean(options.serverOnly) },
+        { includeMetadataChanges: true },
         (snap) => {
           if (options.serverOnly && snap.metadata.hasPendingWrites) return
-          setState({ data: snap.exists() ? ({ id: snap.id, ...snap.data() } as T) : null, loading: false, error: null })
+          setState((s) => ({ data: snap.exists() ? ({ id: snap.id, ...snap.data() } as T) : null, loading: false, error: null, synced: s.synced || !snap.metadata.fromCache }))
         },
         (error) => {
           if (isPermissionDenied(error) && attempts < MAX_RETRIES) {
@@ -94,7 +97,7 @@ export function useDocument<T>(makeRef: () => DocumentReference | null, deps: De
             return
           }
           if (import.meta.env.DEV) console.error('[firestore:document]', error)
-          setState({ data: null, loading: false, error })
+          setState({ data: null, loading: false, error, synced: true })
         },
       )
     }

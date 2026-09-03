@@ -6,7 +6,6 @@ import {
   getDoc,
   getDocs,
   query,
-  runTransaction,
   setDoc,
   updateDoc,
   where,
@@ -277,36 +276,35 @@ export async function deleteMatch(gid: string, mid: string): Promise<void> {
 
 // ---------- Disponibilidade, posição e pagamento ----------
 
+/**
+ * Disponibilidade/posição do próprio atleta.
+ * Sem transação: gravações simples têm atualização otimista (a tela muda na hora,
+ * o servidor confirma em seguida). `exists` vem do snapshot já carregado na tela.
+ */
 export async function setAvailability(
-  gid: string, mid: string, actor: Actor, status: AvailabilityStatus, position: Position | null,
+  gid: string, mid: string, actor: Actor, status: AvailabilityStatus, position: Position | null, exists: boolean,
 ): Promise<void> {
   const ref = playerRef(gid, mid, actor.uid)
-  await runTransaction(db, async (tx) => {
-    const snap = await tx.get(ref)
-    const now = Date.now()
-    if (snap.exists()) {
-      tx.update(ref, { status, position, updatedAt: now, name: actor.name })
-    } else {
-      const player: Omit<MatchPlayer, 'id'> = { name: actor.name, status, position, paid: false, paidAt: null, updatedAt: now }
-      tx.set(ref, player)
-    }
-  })
+  const now = Date.now()
+  if (exists) {
+    await updateDoc(ref, { status, position, updatedAt: now, name: actor.name })
+  } else {
+    const player: Omit<MatchPlayer, 'id'> = { name: actor.name, status, position, paid: false, paidAt: null, updatedAt: now }
+    await setDoc(ref, player)
+  }
 }
 
 /** Gestor define disponibilidade/posição de qualquer membro. */
 export async function managerSetPlayer(
-  gid: string, mid: string, member: Pick<Member, 'uid' | 'name'>, status: AvailabilityStatus, position: Position | null,
+  gid: string, mid: string, member: Pick<Member, 'uid' | 'name'>, status: AvailabilityStatus, position: Position | null, exists: boolean,
 ): Promise<void> {
   const ref = playerRef(gid, mid, member.uid)
-  await runTransaction(db, async (tx) => {
-    const snap = await tx.get(ref)
-    const now = Date.now()
-    if (snap.exists()) tx.update(ref, { status, position, updatedAt: now })
-    else {
-      const player: Omit<MatchPlayer, 'id'> = { name: member.name, status, position, paid: false, paidAt: null, updatedAt: now }
-      tx.set(ref, player)
-    }
-  })
+  const now = Date.now()
+  if (exists) await updateDoc(ref, { status, position, updatedAt: now })
+  else {
+    const player: Omit<MatchPlayer, 'id'> = { name: member.name, status, position, paid: false, paidAt: null, updatedAt: now }
+    await setDoc(ref, player)
+  }
 }
 
 export async function setPaid(gid: string, mid: string, uid: string, paid: boolean): Promise<void> {

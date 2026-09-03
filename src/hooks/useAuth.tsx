@@ -27,7 +27,8 @@ interface AuthContextValue {
   platformRole: PlatformRole | null
   isOwner: boolean
   canOrganize: boolean
-  loading: boolean
+  loading: boolean // só a autenticação (rápida, vem da sessão salva)
+  roleReady: boolean // perfil e papel de plataforma já carregados
   signup: (input: SignupInput) => Promise<void>
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
@@ -133,7 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         platformRole: entry?.platformRole ?? null,
         isOwner: entry?.platformRole === 'owner',
         canOrganize: entry?.platformRole === 'owner' || entry?.platformRole === 'organizer',
-        loading: !authReady || !profileReady || !entryReady,
+        loading: !authReady,
+        roleReady: profileReady && entryReady,
         signup, login, logout, updateProfileData,
       }}
     >
