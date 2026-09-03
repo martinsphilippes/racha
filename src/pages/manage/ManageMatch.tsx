@@ -87,7 +87,7 @@ function PlayersSection({ match, players, members, open }: { match: Match; playe
   }
   const seg = (active: boolean, tone: 'green' | 'red' | 'blue' | 'amber') => {
     const on = { green: 'bg-green-500 text-white', red: 'bg-red-500 text-white', blue: 'bg-royal-500 text-white', amber: 'bg-gold-400 text-navy-950' }[tone]
-    return `min-h-10 flex-1 rounded-lg px-2 text-sm font-bold transition ${active ? on : 'bg-surface-2 text-muted hover:bg-navy-700'}`
+    return `min-h-11 whitespace-nowrap rounded-lg px-2 text-sm font-bold transition ${active ? on : 'bg-surface-2 text-muted hover:bg-navy-700'}`
   }
   return (
     <section id="players">
@@ -103,7 +103,7 @@ function PlayersSection({ match, players, members, open }: { match: Match; playe
                 {status === 'available' ? <Pill tone="green">Vai jogar{p?.position === 'goalkeeper' ? ' · goleiro' : ''}</Pill>
                   : status === 'unavailable' ? <Pill tone="red">Não vai</Pill> : <Pill>Sem resposta</Pill>}
               </div>
-              <div className="flex gap-2" role="group" aria-label={`Disponibilidade de ${m.name}`}>
+              <div className="grid grid-cols-2 gap-2" role="group" aria-label={`Disponibilidade de ${m.name}`}>
                 <button type="button" onClick={() => set(m, 'available', p?.position ?? 'line')} className={seg(status === 'available', 'green')} aria-pressed={status === 'available'} aria-label={`${m.name} disponível`}>✓ Vai</button>
                 <button type="button" onClick={() => set(m, 'unavailable', null)} className={seg(status === 'unavailable', 'red')} aria-pressed={status === 'unavailable'} aria-label={`${m.name} indisponível`}>✗ Não vai</button>
                 {status === 'available' && POSITIONS.map((pos) => (
