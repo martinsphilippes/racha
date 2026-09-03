@@ -294,17 +294,17 @@ export async function setAvailability(
   }
 }
 
-/** Gestor define disponibilidade/posição de qualquer membro. */
+/**
+ * Gestor define disponibilidade/posição de qualquer membro.
+ * `merge` cria o registro se não existir e, se existir, altera só estes campos
+ * (nunca mexe no pagamento, mesmo com toques rápidos em sequência).
+ */
 export async function managerSetPlayer(
   gid: string, mid: string, member: Pick<Member, 'uid' | 'name'>, status: AvailabilityStatus, position: Position | null, exists: boolean,
 ): Promise<void> {
   const ref = playerRef(gid, mid, member.uid)
-  const now = Date.now()
-  if (exists) await updateDoc(ref, { status, position, updatedAt: now })
-  else {
-    const player: Omit<MatchPlayer, 'id'> = { name: member.name, status, position, paid: false, paidAt: null, updatedAt: now }
-    await setDoc(ref, player)
-  }
+  const base = { name: member.name, status, position, updatedAt: Date.now() }
+  await setDoc(ref, exists ? base : { ...base, paid: false, paidAt: null }, { merge: true })
 }
 
 export async function setPaid(gid: string, mid: string, uid: string, paid: boolean): Promise<void> {

@@ -85,27 +85,37 @@ function PlayersSection({ match, players, members, open }: { match: Match; playe
   function set(m: Member, status: 'available' | 'unavailable', position: Position | null) {
     managerSetPlayer(group!.id, match.id, m, status, position, byId.has(m.uid)).catch((err) => toast(errorMessage(err), 'error'))
   }
+  const seg = (active: boolean, tone: 'green' | 'red' | 'blue' | 'amber') => {
+    const on = { green: 'bg-green-500 text-white', red: 'bg-red-500 text-white', blue: 'bg-royal-500 text-white', amber: 'bg-gold-400 text-navy-950' }[tone]
+    return `min-h-10 flex-1 rounded-lg px-2 text-sm font-bold transition ${active ? on : 'bg-surface-2 text-muted hover:bg-navy-700'}`
+  }
   return (
     <section id="players">
       <SectionTitle right={<Pill>{members.length} membros</Pill>}>Jogadores</SectionTitle>
       <Card className="divide-y divide-line/70 p-0">
         {members.map((m) => {
           const p = byId.get(m.uid)
+          const status = p?.status ?? null
           return (
-            <div key={m.uid} className="flex items-center justify-between gap-2 px-3 py-2">
-              <div className="min-w-0 flex-1 truncate font-medium">{shortName(m.name)}</div>
-              <div className="flex shrink-0 items-center gap-1">
-                <button type="button" onClick={() => set(m, 'available', p?.position ?? 'line')} className={`rounded-lg px-2 py-1.5 text-xs font-bold ${p?.status === 'available' ? 'bg-green-500 text-white' : 'bg-surface-2 text-muted'}`} aria-label={`${m.name} disponível`}>✓</button>
-                <button type="button" onClick={() => set(m, 'unavailable', null)} className={`rounded-lg px-2 py-1.5 text-xs font-bold ${p?.status === 'unavailable' ? 'bg-red-500 text-white' : 'bg-surface-2 text-muted'}`} aria-label={`${m.name} indisponível`}>✗</button>
-                {p?.status === 'available' && (
-                  <select value={p.position ?? 'line'} onChange={(e) => set(m, 'available', e.target.value as Position)} className="w-auto rounded-lg px-2 py-1 text-xs" aria-label={`Posição de ${m.name}`}>
-                    {POSITIONS.map((pos) => <option key={pos.value} value={pos.value}>{pos.label}</option>)}
-                  </select>
-                )}
+            <div key={m.uid} className="space-y-2 px-3 py-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 truncate font-semibold">{shortName(m.name)}</div>
+                {status === 'available' ? <Pill tone="green">Vai jogar{p?.position === 'goalkeeper' ? ' · goleiro' : ''}</Pill>
+                  : status === 'unavailable' ? <Pill tone="red">Não vai</Pill> : <Pill>Sem resposta</Pill>}
+              </div>
+              <div className="flex gap-2" role="group" aria-label={`Disponibilidade de ${m.name}`}>
+                <button type="button" onClick={() => set(m, 'available', p?.position ?? 'line')} className={seg(status === 'available', 'green')} aria-pressed={status === 'available'} aria-label={`${m.name} disponível`}>✓ Vai</button>
+                <button type="button" onClick={() => set(m, 'unavailable', null)} className={seg(status === 'unavailable', 'red')} aria-pressed={status === 'unavailable'} aria-label={`${m.name} indisponível`}>✗ Não vai</button>
+                {status === 'available' && POSITIONS.map((pos) => (
+                  <button key={pos.value} type="button" onClick={() => set(m, 'available', pos.value)} className={seg(p?.position === pos.value, pos.value === 'goalkeeper' ? 'amber' : 'blue')} aria-pressed={p?.position === pos.value} aria-label={`${m.name} ${pos.label.toLowerCase()}`}>
+                    {pos.value === 'goalkeeper' ? '🧤' : '⚽'} {pos.label}
+                  </button>
+                ))}
               </div>
             </div>
           )
         })}
+        {members.length === 0 && <p className="p-4 text-sm text-muted">Nenhum jogador no grupo ainda. Adicione em Gestão → Jogadores.</p>}
       </Card>
       {!open && <p className="mt-1 text-xs text-muted">Partida encerrada: os atletas não podem mais alterar a resposta, mas você pode ajustar.</p>}
     </section>
