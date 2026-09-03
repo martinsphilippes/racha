@@ -79,7 +79,7 @@ export default function AddressInput({ value, coords, onChange, placeholder }: P
           {results.map((r) => (
             <li key={`${r.lat},${r.lng},${r.label}`} role="option" aria-selected={false}>
               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(r)} className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2">
-                {r.name && <span className="font-semibold">{r.name} · </span>}{r.label}
+                {r.name && r.label.startsWith(r.name) ? <><span className="font-semibold">{r.name}</span>{r.label.slice(r.name.length)}</> : r.label}
               </button>
             </li>
           ))}
