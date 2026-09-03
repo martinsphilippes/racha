@@ -54,9 +54,10 @@ body {
 /* Área de toque grande: essencial no uso diário no celular. */
 button, a, input, select, textarea { touch-action: manipulation; }
 
-input, select, textarea {
+input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   @apply w-full rounded-xl border border-line bg-navy-900 px-4 py-3 text-base text-ink outline-none placeholder:text-muted/60 focus:border-flame-500 focus:ring-2 focus:ring-flame-500/30;
 }
+input[type="checkbox"] { @apply h-5 w-5 shrink-0 rounded border-line; }
 select { appearance: auto; }
 select option { background-color: var(--color-navy-900); color: var(--color-ink); }
 input:disabled { @apply opacity-70; }
