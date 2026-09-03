@@ -8,7 +8,7 @@ import { Button, Card, ErrorText, Field, PageHeader } from '@/components/ui'
 import { errorMessage, useToast } from '@/components/Toast'
 
 export default function NewGroup() {
-  const { user, profile } = useAuth()
+  const { user, profile, canOrganize } = useAuth()
   const { setGroupId, memberships } = useGroup()
   const navigate = useNavigate()
   const toast = useToast()
@@ -36,6 +36,15 @@ export default function NewGroup() {
       setError(errorMessage(err))
       setBusy(false)
     }
+  }
+
+  if (!canOrganize) {
+    return (
+      <div>
+        <PageHeader title="Novo grupo" back="/" />
+        <Card><p className="text-sm text-muted">Somente organizadores criam grupos. Peça ao dono do app para tornar você organizador.</p></Card>
+      </div>
+    )
   }
 
   return (

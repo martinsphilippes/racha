@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { useAuth } from '@/hooks/useAuth'
 import { useGroup } from '@/hooks/useGroupContext'
 import { useAnnouncements, useGroupNames, useMatchPlayers, useMembers, useNextMatch, useUpcomingMatches } from '@/hooks/useGroupData'
 import { useAutoGenerateMatches } from '@/hooks/useAutoGenerateMatches'
@@ -7,6 +8,7 @@ import { Button, Card, EmptyState, LinkButton, SectionTitle, Spinner } from '@/c
 import MatchView, { AnnouncementCards } from '@/components/MatchView'
 
 export default function Home() {
+  const { profile, canOrganize, isOwner } = useAuth()
   const { memberships, membershipsLoading, membershipsError, group, groupId, groupLoading, isManager, setGroupId } = useGroup()
   useAutoGenerateMatches()
   const { match, loading: matchLoading } = useNextMatch(groupId)
@@ -22,16 +24,26 @@ export default function Home() {
 
   if (memberships.length === 0) {
     return (
-      <div className="space-y-4 pt-6">
+      <div className="space-y-4 pt-2">
         <div className="text-center">
-          <img src="/brand/logo.webp" alt="Racha 10" className="mx-auto mb-2 w-64 max-w-full rounded-2xl" />
+          <img src="/brand/logo.webp" alt="Racha 10" className="mx-auto mb-2 h-40 w-auto" />
           <h1 className="text-2xl font-extrabold">Bem-vindo ao Racha!</h1>
-          <p className="mt-1 text-sm text-muted">Entre no grupo do seu futebol ou crie um novo.</p>
         </div>
-        <Card className="space-y-3">
-          <LinkButton to="/groups/join" variant="primary" className="w-full py-4 text-lg">TENHO UM CÓDIGO DE CONVITE</LinkButton>
-          <LinkButton to="/groups/new" className="w-full">Sou organizador: criar grupo</LinkButton>
-        </Card>
+        {canOrganize ? (
+          <Card className="space-y-3">
+            <p className="text-center text-sm text-muted">Você é {isOwner ? 'o dono' : 'organizador'}. Crie o grupo do seu futebol e depois adicione os atletas.</p>
+            <LinkButton to="/groups/new" variant="primary" className="w-full py-4 text-lg">CRIAR MEU GRUPO</LinkButton>
+            {isOwner && <LinkButton to="/admin" className="w-full">Administração</LinkButton>}
+          </Card>
+        ) : (
+          <Card className="space-y-2 text-center">
+            <div className="text-3xl">⏳</div>
+            <h2 className="text-lg font-bold">Aguardando o organizador</h2>
+            <p className="text-sm text-muted">Sua conta está pronta. O organizador do seu futebol vai adicionar você ao grupo pelo seu nome ou e-mail:</p>
+            <div className="rounded-xl bg-surface-2 px-3 py-2 font-mono text-sm">{profile?.email}</div>
+            <p className="text-xs text-muted">Assim que for adicionado, a próxima partida aparece aqui automaticamente.</p>
+          </Card>
+        )}
       </div>
     )
   }

@@ -65,7 +65,7 @@ export default function Dashboard() {
           <Action to="/manage/schedule" icon="🔁" label="Futebol semanal" />
           <Action to="/manage/match/new" icon="➕" label="Partida avulsa" />
           <Action to="/manage/venues" icon="📍" label="Locais e quadras" />
-          <Action to="/manage/members" icon="🔗" label="Jogadores e convite" />
+          <Action to="/manage/members" icon="🔗" label="Jogadores do grupo" />
           <Action to="/manage/group" icon="💳" label="PIX e grupo" />
         </div>
       </section>

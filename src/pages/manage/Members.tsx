@@ -1,35 +1,45 @@
+import { useMemo, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useGroup } from '@/hooks/useGroupContext'
 import { useMembers } from '@/hooks/useGroupData'
-import { regenerateInviteCode, removeMember, setMemberRole } from '@/lib/repo'
-import { copyText } from '@/lib/clipboard'
-import type { Member } from '@/lib/types'
+import { useDirectory } from '@/hooks/usePlatform'
+import { addMember, removeMember, setMemberRole } from '@/lib/repo'
+import { PLATFORM_ROLE_LABEL } from '@/lib/platform'
+import type { DirectoryEntry, Member } from '@/lib/types'
 import { Button, Card, PageHeader, Pill, SectionTitle, Spinner } from '@/components/ui'
 import { errorMessage, useToast } from '@/components/Toast'
 
 export default function Members() {
-  const { user } = useAuth()
+  const { user, profile, isOwner } = useAuth()
   const { group, groupId } = useGroup()
   const { data: members, loading } = useMembers(groupId)
+  const { data: directory } = useDirectory(true)
   const toast = useToast()
+  const [search, setSearch] = useState('')
 
-  if (!group) return <Spinner />
-  const link = `${location.origin}/groups/join?code=${group.inviteCode}`
-  const shareText = `Entre no meu futebol "${group.name}" no Racha!\nCódigo de convite: ${group.inviteCode}\n${link}`
+  const memberIds = useMemo(() => new Set(members.map((m) => m.uid)), [members])
+  const candidates = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return []
+    return directory.filter((p) => !memberIds.has(p.uid) && (p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q))).slice(0, 8)
+  }, [directory, memberIds, search])
+  const roleOf = (uid: string) => directory.find((p) => p.uid === uid)?.platformRole
 
-  async function share() {
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Racha', text: shareText }); return } catch { /* cancelado */ }
-    }
-    toast((await copyText(shareText)) ? 'Convite copiado!' : 'Não foi possível copiar', 'ok')
-  }
-  async function regenerate() {
-    if (!confirm('Gerar um novo código? O código atual deixará de funcionar.')) return
-    try { await regenerateInviteCode(group!); toast('Novo código gerado') } catch (err) { toast(errorMessage(err), 'error') }
+  if (!group || !user) return <Spinner />
+
+  async function add(p: DirectoryEntry) {
+    try {
+      await addMember(group!.id, p, 'player', { uid: user!.uid, name: profile?.name ?? '' })
+      toast(`${p.name} adicionado ao grupo`)
+      setSearch('')
+    } catch (err) { toast(errorMessage(err), 'error') }
   }
   async function toggleRole(m: Member) {
     const role = m.role === 'manager' ? 'player' : 'manager'
-    if (!confirm(role === 'manager' ? `Tornar ${m.name} gestor do grupo?` : `Remover ${m.name} da gestão?`)) return
+    if (role === 'manager' && roleOf(m.uid) !== 'organizer' && roleOf(m.uid) !== 'owner') {
+      toast('Só organizadores podem ser gestores. Promova a pessoa em Administração.', 'error'); return
+    }
+    if (!confirm(role === 'manager' ? `Tornar ${m.name} gestor deste grupo?` : `Remover ${m.name} da gestão deste grupo?`)) return
     try { await setMemberRole(group!.id, m.uid, role); toast('Permissão atualizada') } catch (err) { toast(errorMessage(err), 'error') }
   }
   async function remove(m: Member) {
@@ -41,15 +51,24 @@ export default function Members() {
     <div className="space-y-5">
       <PageHeader title="Jogadores" back="/manage" />
       <section>
-        <SectionTitle>Convite</SectionTitle>
-        <Card className="space-y-3 text-center">
-          <p className="text-sm text-muted">Compartilhe o código com os atletas. Eles entram em "Tenho um código de convite".</p>
-          <div className="text-4xl font-extrabold tracking-[0.3em]" data-testid="invite-code">{group.inviteCode}</div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" onClick={share}>Compartilhar</Button>
-            <Button variant="outline" onClick={async () => toast((await copyText(group.inviteCode)) ? 'Código copiado!' : 'Erro ao copiar')}>Copiar código</Button>
-          </div>
-          <button type="button" onClick={regenerate} className="text-xs text-muted underline">Gerar novo código</button>
+        <SectionTitle>Adicionar jogador</SectionTitle>
+        <Card className="space-y-2">
+          <p className="text-sm text-muted">O atleta cria a conta no app; você o encontra aqui pelo nome ou e-mail e adiciona ao grupo.</p>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou e-mail" aria-label="Buscar jogador" />
+          {candidates.length > 0 && (
+            <ul className="divide-y divide-line/70">
+              {candidates.map((p) => (
+                <li key={p.uid} className="flex items-center justify-between gap-2 py-2">
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold">{p.name}</div>
+                    <div className="truncate text-xs text-muted">{p.email} · {PLATFORM_ROLE_LABEL[p.platformRole]}</div>
+                  </div>
+                  <Button size="sm" onClick={() => add(p)} aria-label={`Adicionar ${p.name}`}>Adicionar</Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {search.trim() && candidates.length === 0 && <p className="text-sm text-muted">Ninguém encontrado. A pessoa já criou a conta no app?</p>}
         </Card>
       </section>
       <section>
@@ -64,8 +83,8 @@ export default function Members() {
               </div>
               {m.uid !== user?.uid && (
                 <div className="flex shrink-0 gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => toggleRole(m)}>{m.role === 'manager' ? 'Rebaixar' : 'Promover'}</Button>
-                  <Button size="sm" variant="ghost" onClick={() => remove(m)} aria-label={`Remover ${m.name}`}>🗑️</Button>
+                  {isOwner && <Button size="sm" variant="ghost" onClick={() => toggleRole(m)}>{m.role === 'manager' ? 'Rebaixar' : 'Promover'}</Button>}
+                  {(isOwner || m.role === 'player') && <Button size="sm" variant="ghost" onClick={() => remove(m)} aria-label={`Remover ${m.name}`}>🗑️</Button>}
                 </div>
               )}
             </div>

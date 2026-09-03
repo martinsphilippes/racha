@@ -8,6 +8,17 @@ rateio automático com isenção de goleiros, PIX, controle de pagamento, sortei
   a lógica roda no cliente e a segurança é garantida pelas **regras do Firestore** (`firestore.rules`).
 - **Hospedagem:** Vercel (`vercel.json` já configura o SPA e o cache do service worker).
 
+## Papéis de acesso
+
+| Papel | Quem | Pode |
+| --- | --- | --- |
+| **Dono** | a conta com o e-mail fixado em `src/lib/platform.ts` e em `firestore.rules` | tudo: promover/rebaixar organizadores (aba **Admin**), acessar e administrar qualquer grupo |
+| **Organizador** | quem o dono promoveu | criar grupos, cadastrar locais/quadras/agenda, adicionar atletas ao grupo (busca por nome ou e-mail no diretório), pagamentos, times, comunicados |
+| **Atleta** | todo mundo que cria conta | responder disponibilidade e posição, ver rateio, PIX, times e comunicados dos grupos em que foi colocado |
+
+Não existe código de convite: há um único cadastro, e o organizador coloca o atleta no grupo.
+Somente o dono muda papéis (regra garantida no Firestore, não só na interface).
+
 ## Como funciona
 
 | Tela | Quem | O que faz |
@@ -18,7 +29,8 @@ rateio automático com isenção de goleiros, PIX, controle de pagamento, sortei
 | Gestão › Partida | gestor | Confirmar/cancelar, ajustar participantes, pagamentos, gerar/sortear/mover times, comunicado, editar dados e custo manual |
 | Gestão › Locais | gestor | Locais e quadras com valor por hora |
 | Gestão › Futebol semanal | gestor | Agenda recorrente; as próximas partidas são geradas automaticamente (cada data é independente) |
-| Gestão › Jogadores | gestor | Código de convite, promover/remover membros |
+| Gestão › Jogadores | gestor | Adicionar atletas do diretório, remover; dono define gestores |
+| Admin | dono | Lista de usuários com papel (atleta/organizador) e todos os grupos |
 | Gestão › Grupo e PIX | gestor | Nome, modalidade, mínimo de jogadores, chave PIX |
 | Perfil | todos | Dados pessoais, trocar de grupo, entrar/criar grupo |
 
@@ -79,9 +91,9 @@ O app é instalável no celular ("Adicionar à tela inicial"); atualizações do
 ## Estrutura de dados (Firestore)
 
 ```
-users/{uid}                          perfil (nome, e-mail, telefone, endereço)
-invites/{code}                       código de convite → grupo
-groups/{groupId}                     grupo, padrões do futebol, PIX, código de convite
+directory/{uid}                      nome, e-mail e papel de plataforma (visível a autenticados; papel só o dono altera)
+users/{uid}                          perfil privado (telefone, endereço)
+groups/{groupId}                     grupo, padrões do futebol, PIX
   members/{uid}                      papel (manager | player) — fonte da verdade de acesso
   venues/{venueId}                   local
   courts/{courtId}                   quadra (local, modalidade, valor/hora)
@@ -93,7 +105,8 @@ groups/{groupId}                     grupo, padrões do futebol, PIX, código de
 
 Regras de segurança (`firestore.rules`, cobertas por `tests/rules`):
 atleta só lê grupos dos quais participa e só altera a própria disponibilidade/posição (nunca o pagamento);
-somente gestores alteram grupo, PIX, locais, agenda, partidas, pagamentos, times e comunicados.
+somente gestores alteram grupo, PIX, locais, agenda, partidas, pagamentos, times e comunicados;
+somente o dono altera papéis de plataforma e define gestores; ninguém entra em um grupo sozinho.
 
 ## Próximos passos sugeridos
 

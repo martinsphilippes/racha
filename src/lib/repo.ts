@@ -14,14 +14,16 @@ import {
   type UpdateData,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { inviteCode, newId } from './ids'
+import { newId } from './ids'
 import { matchIdFor, matchTimes, upcomingDates } from './matches'
 import type {
-  Announcement, AvailabilityStatus, Court, Group, Match, MatchPlayer, Member, PixKeyType, Position, Schedule, Sport, Team, Venue,
+  Announcement, AvailabilityStatus, Court, DirectoryEntry, Group, Match, MatchPlayer, Member, PixKeyType, Position, Schedule, Sport, Team, Venue,
 } from './types'
+import type { PlatformRole } from './platform'
 
 export const groupRef = (gid: string) => doc(db, 'groups', gid)
 export const memberRef = (gid: string, uid: string) => doc(db, 'groups', gid, 'members', uid)
+export const directoryRef = (uid: string) => doc(db, 'directory', uid)
 export const venueRef = (gid: string, vid: string) => doc(db, 'groups', gid, 'venues', vid)
 export const courtRef = (gid: string, cid: string) => doc(db, 'groups', gid, 'courts', cid)
 export const scheduleRef = (gid: string, sid: string) => doc(db, 'groups', gid, 'schedules', sid)
@@ -42,14 +44,12 @@ export interface GroupInput {
 
 export async function createGroup(input: GroupInput, actor: Actor): Promise<string> {
   const gid = newId()
-  const code = inviteCode()
   const batch = writeBatch(db)
   const group: Omit<Group, 'id'> = {
     name: input.name.trim(),
     sport: input.sport,
     createdBy: actor.uid,
     createdAt: Date.now(),
-    inviteCode: code,
     minPlayers: input.minPlayers,
     notes: input.notes.trim(),
     defaultVenueId: null,
@@ -63,9 +63,8 @@ export async function createGroup(input: GroupInput, actor: Actor): Promise<stri
     pixCity: null,
   }
   batch.set(groupRef(gid), group)
-  const member: Omit<Member, 'id'> = { uid: actor.uid, groupId: gid, name: actor.name, role: 'manager', joinedAt: Date.now() }
+  const member: Omit<Member, 'id'> = { uid: actor.uid, groupId: gid, name: actor.name, role: 'manager', joinedAt: Date.now(), addedBy: actor.uid }
   batch.set(memberRef(gid, actor.uid), member)
-  batch.set(doc(db, 'invites', code), { code, groupId: gid, groupName: group.name, createdAt: Date.now() })
   await batch.commit()
   return gid
 }
@@ -79,29 +78,25 @@ export async function updatePix(gid: string, pix: PixInput): Promise<void> {
   await updateDoc(groupRef(gid), { ...pix })
 }
 
-/** Entra em um grupo pelo código de convite. Retorna o id do grupo. */
-export async function joinGroup(code: string, actor: Actor): Promise<string> {
-  const normalized = code.trim().toUpperCase()
-  const invite = await getDoc(doc(db, 'invites', normalized))
-  if (!invite.exists()) throw new Error('Código de convite não encontrado.')
-  const gid = invite.data().groupId as string
-  const existing = await getDoc(memberRef(gid, actor.uid)).catch(() => null)
-  if (existing?.exists()) return gid
-  const member: Omit<Member, 'id'> = {
-    uid: actor.uid, groupId: gid, name: actor.name, role: 'player', joinedAt: Date.now(), inviteCode: normalized,
-  }
-  await setDoc(memberRef(gid, actor.uid), member)
-  return gid
+// ---------- Diretório e papéis de plataforma ----------
+
+/** Garante o registro público do usuário no diretório (criado no cadastro; reparado no login). */
+export async function ensureDirectoryEntry(user: { uid: string; name: string; email: string }, role: PlatformRole): Promise<void> {
+  const existing = await getDoc(directoryRef(user.uid)).catch(() => null)
+  if (existing?.exists()) return
+  const entry: Omit<DirectoryEntry, 'id'> = { uid: user.uid, name: user.name, email: user.email.toLowerCase(), platformRole: role, createdAt: Date.now() }
+  await setDoc(directoryRef(user.uid), entry)
 }
 
-export async function regenerateInviteCode(group: Group): Promise<string> {
-  const code = inviteCode()
-  const batch = writeBatch(db)
-  batch.update(groupRef(group.id), { inviteCode: code })
-  batch.set(doc(db, 'invites', code), { code, groupId: group.id, groupName: group.name, createdAt: Date.now() })
-  if (group.inviteCode) batch.delete(doc(db, 'invites', group.inviteCode))
-  await batch.commit()
-  return code
+/** Dono: define o papel de plataforma de um usuário. */
+export async function setPlatformRole(uid: string, platformRole: Exclude<PlatformRole, 'owner'>): Promise<void> {
+  await updateDoc(directoryRef(uid), { platformRole })
+}
+
+/** Gestor/dono adiciona um usuário do diretório ao grupo. */
+export async function addMember(gid: string, entry: Pick<DirectoryEntry, 'uid' | 'name'>, role: Member['role'], actor: Actor): Promise<void> {
+  const member: Omit<Member, 'id'> = { uid: entry.uid, groupId: gid, name: entry.name, role, joinedAt: Date.now(), addedBy: actor.uid }
+  await setDoc(memberRef(gid, entry.uid), member)
 }
 
 export async function setMemberRole(gid: string, uid: string, role: Member['role']): Promise<void> {

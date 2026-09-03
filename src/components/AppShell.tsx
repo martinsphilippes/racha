@@ -1,15 +1,18 @@
 import { NavLink, Outlet } from 'react-router'
+import { useAuth } from '@/hooks/useAuth'
 import { useGroup } from '@/hooks/useGroupContext'
 
 const tabs = [
   { to: '/', label: 'Início', icon: '⚽', end: true },
   { to: '/history', label: 'Histórico', icon: '📅' },
   { to: '/manage', label: 'Gestão', icon: '🛠️', manager: true },
+  { to: '/admin', label: 'Admin', icon: '👑', owner: true },
   { to: '/profile', label: 'Perfil', icon: '👤' },
 ]
 
 export default function AppShell() {
-  const { isManager } = useGroup()
+  const { isManager, memberships } = useGroup()
+  const { isOwner } = useAuth()
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col">
       <header className="flex items-center justify-center pt-3">
@@ -20,7 +23,7 @@ export default function AppShell() {
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-navy-950/95 backdrop-blur" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="mx-auto flex max-w-lg">
-          {tabs.filter((t) => !t.manager || isManager).map((t) => (
+          {tabs.filter((t) => (!t.manager || (isManager && memberships.length > 0)) && (!t.owner || isOwner)).map((t) => (
             <NavLink
               key={t.to}
               to={t.to}

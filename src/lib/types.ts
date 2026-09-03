@@ -32,7 +32,20 @@ export type MemberRole = 'manager' | 'player'
 export type MatchStatus = 'open' | 'confirmed' | 'cancelled' | 'finished'
 export type AvailabilityStatus = 'available' | 'unavailable'
 
-// users/{uid}
+import type { PlatformRole } from './platform'
+
+// directory/{uid} — visível a todos os usuários autenticados (para o organizador montar o grupo)
+// e onde o dono define o papel de plataforma. Dados privados ficam em users/{uid}.
+export interface DirectoryEntry {
+  id: string
+  uid: string
+  name: string
+  email: string
+  platformRole: PlatformRole
+  createdAt: number
+}
+
+// users/{uid} — privado (só o próprio usuário lê)
 export interface UserProfile {
   id: string
   name: string
@@ -49,7 +62,6 @@ export interface Group {
   sport: Sport
   createdBy: string
   createdAt: number
-  inviteCode: string
   minPlayers: number
   notes: string
   // Padrões do futebol recorrente (informativo; a agenda real fica em schedules)
@@ -73,7 +85,7 @@ export interface Member {
   name: string
   role: MemberRole
   joinedAt: number
-  inviteCode?: string // usado apenas na entrada via convite (validado pelas regras)
+  addedBy: string // uid de quem adicionou (o próprio, na criação do grupo)
 }
 
 // groups/{groupId}/venues/{venueId}
@@ -163,10 +175,3 @@ export interface Announcement {
   createdAt: number
 }
 
-// invites/{code} — permite descobrir o grupo a partir do código antes de ser membro
-export interface Invite {
-  code: string
-  groupId: string
-  groupName: string
-  createdAt: number
-}

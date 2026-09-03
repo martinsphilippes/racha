@@ -12,7 +12,7 @@ import MatchPage from '@/pages/MatchPage'
 import History from '@/pages/History'
 import Profile from '@/pages/Profile'
 import NewGroup from '@/pages/NewGroup'
-import JoinGroup from '@/pages/JoinGroup'
+import Admin from '@/pages/Admin'
 import Dashboard from '@/pages/manage/Dashboard'
 import GroupSettings from '@/pages/manage/GroupSettings'
 import Venues from '@/pages/manage/Venues'
@@ -41,6 +41,13 @@ function RequireManager() {
   const { isManager, membershipsLoading, groupLoading } = useGroup()
   if (membershipsLoading || groupLoading) return <Spinner />
   if (!isManager) return <Navigate to="/" replace />
+  return <Outlet />
+}
+
+function RequireOwner() {
+  const { isOwner, loading } = useAuth()
+  if (loading) return <Spinner />
+  if (!isOwner) return <Navigate to="/" replace />
   return <Outlet />
 }
 
@@ -75,7 +82,9 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route index element={<Home />} />
                 <Route path="/groups/new" element={<NewGroup />} />
-                <Route path="/groups/join" element={<JoinGroup />} />
+                <Route element={<RequireOwner />}>
+                  <Route path="/admin" element={<Admin />} />
+                </Route>
                 <Route path="/profile" element={<Profile />} />
                 <Route element={<RequireGroup />}>
                   <Route path="/match/:id" element={<MatchPage />} />

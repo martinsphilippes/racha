@@ -9,7 +9,9 @@ import {
 } from 'firebase/auth'
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import type { UserProfile } from '@/lib/types'
+import type { DirectoryEntry, UserProfile } from '@/lib/types'
+import { isOwnerEmail, type PlatformRole } from '@/lib/platform'
+import { ensureDirectoryEntry } from '@/lib/repo'
 
 interface SignupInput {
   name: string
@@ -22,6 +24,9 @@ interface SignupInput {
 interface AuthContextValue {
   user: User | null
   profile: UserProfile | null
+  platformRole: PlatformRole | null
+  isOwner: boolean
+  canOrganize: boolean
   loading: boolean
   signup: (input: SignupInput) => Promise<void>
   login: (email: string, password: string) => Promise<void>
@@ -34,8 +39,10 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [entry, setEntry] = useState<DirectoryEntry | null>(null)
   const [authReady, setAuthReady] = useState(false)
   const [profileReady, setProfileReady] = useState(false)
+  const [entryReady, setEntryReady] = useState(false)
 
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
@@ -43,12 +50,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthReady(true)
       if (!u) {
         setProfile(null)
+        setEntry(null)
         setProfileReady(true)
+        setEntryReady(true)
       } else {
         setProfileReady(false)
+        setEntryReady(false)
       }
     })
   }, [])
+
+  // Registro no diretório (papel de plataforma). Criado no cadastro; reparado aqui se faltar.
+  useEffect(() => {
+    if (!user) return
+    let repaired = false
+    return onSnapshot(
+      doc(db, 'directory', user.uid),
+      (snap) => {
+        if (snap.exists()) {
+          setEntry({ id: snap.id, ...snap.data() } as DirectoryEntry)
+          setEntryReady(true)
+        } else if (!repaired) {
+          repaired = true
+          ensureDirectoryEntry(
+            { uid: user.uid, name: user.displayName ?? 'Atleta', email: user.email ?? '' },
+            isOwnerEmail(user.email) ? 'owner' : 'athlete',
+          ).catch(() => setEntryReady(true))
+        }
+      },
+      () => setEntryReady(true),
+    )
+  }, [user])
 
   useEffect(() => {
     if (!user) return
@@ -72,6 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       address: input.address.trim(),
       createdAt: Date.now(),
     })
+    await ensureDirectoryEntry(
+      { uid: cred.user.uid, name: input.name.trim(), email: input.email.trim() },
+      isOwnerEmail(input.email) ? 'owner' : 'athlete',
+    )
   }
 
   async function login(email: string, password: string) {
@@ -86,10 +122,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return
     await updateDoc(doc(db, 'users', user.uid), data)
     await updateProfile(user, { displayName: data.name })
+    await updateDoc(doc(db, 'directory', user.uid), { name: data.name }).catch(() => undefined)
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading: !authReady || !profileReady, signup, login, logout, updateProfileData }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        platformRole: entry?.platformRole ?? null,
+        isOwner: entry?.platformRole === 'owner',
+        canOrganize: entry?.platformRole === 'owner' || entry?.platformRole === 'organizer',
+        loading: !authReady || !profileReady || !entryReady,
+        signup, login, logout, updateProfileData,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

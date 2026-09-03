@@ -7,9 +7,10 @@ import { errorMessage, useToast } from '@/components/Toast'
 import { updateDoc } from 'firebase/firestore'
 import { memberRef } from '@/lib/repo'
 import { useGroupNames } from '@/hooks/useGroupData'
+import { PLATFORM_ROLE_LABEL } from '@/lib/platform'
 
 export default function Profile() {
-  const { user, profile, logout, updateProfileData } = useAuth()
+  const { user, profile, logout, updateProfileData, platformRole, canOrganize } = useAuth()
   const { memberships, groupId, setGroupId } = useGroup()
   const navigate = useNavigate()
   const toast = useToast()
@@ -35,7 +36,7 @@ export default function Profile() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Perfil" />
+      <PageHeader title="Perfil" right={platformRole ? <Pill tone={platformRole === 'owner' ? 'amber' : platformRole === 'organizer' ? 'blue' : 'neutral'}>{PLATFORM_ROLE_LABEL[platformRole]}</Pill> : null} />
 
       <section>
         <SectionTitle>Meus grupos</SectionTitle>
@@ -52,10 +53,8 @@ export default function Profile() {
               <Pill tone={m.role === 'manager' ? 'blue' : 'neutral'}>{m.role === 'manager' ? 'Gestor' : 'Atleta'}</Pill>
             </button>
           ))}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <LinkButton to="/groups/join">Entrar com código</LinkButton>
-            <LinkButton to="/groups/new">Criar grupo</LinkButton>
-          </div>
+          {canOrganize && <LinkButton to="/groups/new" className="w-full">Criar grupo</LinkButton>}
+          {!canOrganize && <p className="text-xs text-muted">Para entrar em um grupo, peça ao organizador para adicionar você pelo e-mail {user?.email}.</p>}
         </Card>
       </section>
 

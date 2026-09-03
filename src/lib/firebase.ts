@@ -12,15 +12,18 @@ import committedConfig from '@/firebase.config.json'
 
 const useEmulators = import.meta.env.VITE_USE_EMULATORS === 'true'
 
-// Prioridade: variáveis de ambiente (Vercel/.env) → arquivo versionado → emulador.
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || committedConfig.apiKey || (useEmulators ? 'demo-key' : ''),
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || committedConfig.authDomain || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || committedConfig.projectId || (useEmulators ? 'demo-racha' : ''),
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || committedConfig.storageBucket || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || committedConfig.messagingSenderId || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || committedConfig.appId || '',
-}
+// Com emuladores: projeto local fixo (demo-racha), nunca o projeto real.
+// Sem emuladores: variáveis de ambiente (Vercel/.env) → arquivo versionado.
+const firebaseConfig = useEmulators
+  ? { apiKey: 'demo-key', authDomain: 'localhost', projectId: 'demo-racha', storageBucket: '', messagingSenderId: '', appId: 'demo' }
+  : {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY || committedConfig.apiKey || '',
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || committedConfig.authDomain || '',
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || committedConfig.projectId || '',
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || committedConfig.storageBucket || '',
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || committedConfig.messagingSenderId || '',
+      appId: import.meta.env.VITE_FIREBASE_APP_ID || committedConfig.appId || '',
+    }
 
 export const firebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId)
 
