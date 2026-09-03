@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { reverseGeocode, searchAddress, type GeoResult } from '@/lib/geocode'
+import { reverseGeocode, searchAddress, splitHouseNumber, withHouseNumber, type GeoResult } from '@/lib/geocode'
 import { useToast } from './Toast'
 
 interface Props {
@@ -10,14 +10,16 @@ interface Props {
 }
 
 /**
- * Campo de endereço com busca (autocompletar) e "usar minha localização".
- * Ao escolher uma sugestão, grava endereço + coordenadas; editar o texto à mão
- * descarta as coordenadas (o botão "Como chegar" então usa o texto).
+ * Campo de endereço com busca (autocompletar), número próprio e "usar minha localização".
+ * O mapa costuma conhecer a rua, não o número: o número é digitado pelo organizador e
+ * entra no endereço final ("Rua X, 657 - Bairro, Cidade - UF") sem perder a marcação.
  */
 export default function AddressInput({ value, coords, onChange, placeholder }: Props) {
   const [results, setResults] = useState<GeoResult[]>([])
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [base, setBase] = useState<string | null>(null) // sugestão escolhida (sem número)
+  const [number, setNumber] = useState('')
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const abort = useRef<AbortController | null>(null)
   const toast = useToast()
@@ -37,8 +39,17 @@ export default function AddressInput({ value, coords, onChange, placeholder }: P
   }
 
   function pick(r: GeoResult) {
-    onChange(r.label, { lat: r.lat, lng: r.lng })
+    const typed = splitHouseNumber(value).number
+    const n = r.hasNumber ? '' : (number || typed || '')
+    setBase(r.label); setNumber(n)
+    onChange(withHouseNumber(r.label, n || null), { lat: r.lat, lng: r.lng })
     setResults([]); setOpen(false)
+  }
+
+  function changeNumber(n: string) {
+    const clean = n.replace(/[^0-9a-zA-Z]/g, '').slice(0, 7)
+    setNumber(clean)
+    if (base) onChange(withHouseNumber(base, clean || null), coords)
   }
 
   function useMyLocation() {
@@ -57,23 +68,17 @@ export default function AddressInput({ value, coords, onChange, placeholder }: P
   }
 
   return (
-    <div className="relative">
+    <div className="relative space-y-2">
       <input
         value={value}
-        onChange={(e) => { onChange(e.target.value, null); search(e.target.value) }}
+        onChange={(e) => { setBase(null); onChange(e.target.value, null); search(e.target.value) }}
         onFocus={() => results.length && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        placeholder={placeholder ?? 'Digite o nome da arena ou o endereço'}
+        placeholder={placeholder ?? 'Nome da arena ou rua (ex.: Av. Geraldo Alves Tavares)'}
         autoComplete="off"
         aria-autocomplete="list"
         aria-expanded={open}
       />
-      <div className="mt-1 flex items-center justify-between gap-2 text-xs">
-        <span className={coords ? 'text-green-300' : 'text-muted'}>
-          {busy ? 'Buscando…' : coords ? '📍 Localização marcada no mapa' : 'Escolha uma sugestão para marcar no mapa'}
-        </span>
-        <button type="button" onClick={useMyLocation} className="font-semibold text-gold-400">Usar minha localização</button>
-      </div>
       {open && results.length > 0 && (
         <ul role="listbox" className="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-auto rounded-xl border border-line bg-navy-900 shadow-xl">
           {results.map((r) => (
@@ -85,6 +90,24 @@ export default function AddressInput({ value, coords, onChange, placeholder }: P
           ))}
         </ul>
       )}
+      <div className="flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm text-muted">
+          <span className="whitespace-nowrap">Nº</span>
+          <input
+            value={number}
+            onChange={(e) => changeNumber(e.target.value)}
+            inputMode="numeric"
+            placeholder="657"
+            disabled={!base && !coords}
+            aria-label="Número"
+            className="w-24"
+          />
+        </label>
+        <span className={`flex-1 text-xs ${coords ? 'text-green-300' : 'text-muted'}`}>
+          {busy ? 'Buscando…' : coords ? '📍 Marcado no mapa' : 'Escolha uma sugestão e depois informe o número'}
+        </span>
+        <button type="button" onClick={useMyLocation} className="whitespace-nowrap text-xs font-semibold text-gold-400">Usar minha localização</button>
+      </div>
     </div>
   )
 }

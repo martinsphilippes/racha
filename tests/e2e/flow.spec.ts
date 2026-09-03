@@ -115,8 +115,9 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await expect(a.getByText('Você vai jogar?')).toBeVisible()
   await expect(a.getByRole('link', { name: 'Gestão' })).toHaveCount(0)
   // Como chegar: links com as coordenadas do local escolhido
-  await expect(a.getByRole('link', { name: /Como chegar/ })).toHaveAttribute('href', 'https://www.google.com/maps/dir/?api=1&destination=-18.9742,-49.4646')
-  await expect(a.getByRole('link', { name: /Waze/ })).toHaveAttribute('href', 'https://waze.com/ul?ll=-18.9742,-49.4646&navigate=yes')
+  // Endereço com número: os links usam o texto (mais preciso que a coordenada da rua)
+  await expect(a.getByRole('link', { name: /Como chegar/ })).toHaveAttribute('href', /destination=Arena%20Ituiutaba%2C%20Avenida%20Central%2C%20100/)
+  await expect(a.getByRole('link', { name: /Waze/ })).toHaveAttribute('href', /q=Arena%20Ituiutaba%2C%20Avenida%20Central%2C%20100/)
   await a.goto('/manage')
   await expect(a).toHaveURL(/\/$/)
 
