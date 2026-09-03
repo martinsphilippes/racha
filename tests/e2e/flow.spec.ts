@@ -3,16 +3,24 @@ import { expect, test, type Page } from '@playwright/test'
 // Fluxo completo: dono promove organizador → organizador cria grupo, local, agenda e adiciona atleta →
 // disponibilidade, rateio em tempo real, PIX, pagamento, times, comunicado, persistência.
 const run = Date.now().toString(36)
-const owner = { name: 'Philippe Dono', email: 'martinsphilippes@gmail.com', phone: '(34) 99999-0000', address: 'Rua 0', password: 'senha123' }
-const manager = { name: 'Carlos Organizador', email: `gestor-${run}@teste.com`, phone: '(34) 99999-0001', address: 'Rua A, 1', password: 'senha123' }
-const athlete = { name: 'João Atleta Silva', email: `atleta-${run}@teste.com`, phone: '(34) 99999-0002', address: 'Rua B, 2', password: 'senha123' }
+const owner = { name: 'Philippe Dono', email: 'martinsphilippes@gmail.com', phone: '(34) 99999-0000', address: '10', password: 'senha123' }
+const manager = { name: 'Carlos Organizador', email: `gestor-${run}@teste.com`, phone: '(34) 99999-0001', address: '1', password: 'senha123' }
+const athlete = { name: 'João Atleta Silva', email: `atleta-${run}@teste.com`, phone: '(34) 99999-0002', address: '2', password: 'senha123' }
 
+async function mockCep(page: Page) {
+  await page.route('https://viacep.com.br/**', (route) => route.fulfill({ json: { logradouro: 'Rua 20', bairro: 'Centro', localidade: 'Ituiutaba', uf: 'MG' } }))
+}
 async function signup(page: Page, u: typeof manager) {
+  await mockCep(page)
   await page.goto('/signup')
   await page.getByLabel('Nome completo').fill(u.name)
   await page.getByLabel('E-mail').fill(u.email)
   await page.getByLabel('Telefone').fill(u.phone)
-  await page.getByLabel('Endereço').fill(u.address)
+  // Endereço por CEP: rua, bairro, cidade e UF vêm da consulta; número é digitado
+  await page.getByLabel('CEP').fill('38300000')
+  await expect(page.getByLabel('Rua')).toHaveValue('Rua 20')
+  await expect(page.getByLabel('Cidade')).toHaveValue('Ituiutaba')
+  await page.getByLabel('Número').fill(u.address)
   await page.getByLabel('Senha').fill(u.password)
   await page.getByRole('button', { name: 'CRIAR CONTA' }).click()
   await expect(page.getByText('Bem-vindo ao Racha!')).toBeVisible()
@@ -41,11 +49,14 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await expect(a.getByText('Aguardando o organizador')).toBeVisible()
 
   // ----- Dono: cadastro (ou login, se já existir no emulador) e promoção do organizador -----
+  await mockCep(o)
   await o.goto('/signup')
   await o.getByLabel('Nome completo').fill(owner.name)
   await o.getByLabel('E-mail').fill(owner.email)
   await o.getByLabel('Telefone').fill(owner.phone)
-  await o.getByLabel('Endereço').fill(owner.address)
+  await o.getByLabel('CEP').fill('38300000')
+  await expect(o.getByLabel('Rua')).toHaveValue('Rua 20')
+  await o.getByLabel('Número').fill(owner.address)
   await o.getByLabel('Senha').fill(owner.password)
   await o.getByRole('button', { name: 'CRIAR CONTA' }).click()
   await expect(o.getByText(/Bem-vindo ao Racha!|Este e-mail já está cadastrado\./)).toBeVisible()
@@ -181,8 +192,18 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await expect(o.getByText('Painel do gestor')).toBeVisible()
   await expect(o.getByText('Quadra').first()).toBeVisible().catch(() => undefined)
 
-  // ----- Persistência -----
+  // ----- Perfil mostra o endereço estruturado e permite editar o número -----
+  await a.goto('/profile')
+  await expect(a.getByLabel('CEP')).toHaveValue('38300-000')
+  await expect(a.getByLabel('Número')).toHaveValue('2')
+  await a.getByLabel('Número').fill('22')
+  await a.getByRole('button', { name: 'Salvar' }).click()
+  await expect(a.getByText('Perfil atualizado')).toBeVisible()
   await a.reload()
+  await expect(a.getByLabel('Número')).toHaveValue('22')
+
+  // ----- Persistência -----
+  await a.goto('/')
   await expect(a.getByText('🟢 PAGO', { exact: true })).toBeVisible()
   await expect(a.getByRole('button', { name: 'DISPONÍVEL', exact: false }).first()).toHaveAttribute('aria-pressed', 'true')
 

@@ -8,6 +8,8 @@ import { updateDoc } from 'firebase/firestore'
 import { memberRef } from '@/lib/repo'
 import { useGroupNames } from '@/hooks/useGroupData'
 import { PLATFORM_ROLE_LABEL } from '@/lib/platform'
+import AddressForm from '@/components/AddressForm'
+import { EMPTY_ADDRESS, formatAddress, isAddressComplete, type Address } from '@/lib/cep'
 
 export default function Profile() {
   const { user, profile, logout, updateProfileData, platformRole, canOrganize } = useAuth()
@@ -15,16 +17,21 @@ export default function Profile() {
   const navigate = useNavigate()
   const toast = useToast()
   const groupNames = useGroupNames(memberships.map((m) => m.groupId))
-  const [form, setForm] = useState({ name: '', phone: '', address: '' })
+  const [form, setForm] = useState({ name: '', phone: '', address: EMPTY_ADDRESS as Address })
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    if (profile) setForm({ name: profile.name, phone: profile.phone, address: profile.address })
+    if (profile) {
+      // Perfis antigos guardavam o endereço como texto: começa vazio para o usuário informar o CEP.
+      const address = typeof profile.address === 'object' && profile.address ? profile.address : EMPTY_ADDRESS
+      setForm({ name: profile.name, phone: profile.phone, address })
+    }
   }, [profile])
 
   async function submit(e: FormEvent) {
     e.preventDefault()
+    if (!isAddressComplete(form.address)) { setError('Informe o CEP, a rua, o número, a cidade e a UF.'); return }
     setBusy(true); setError('')
     try {
       await updateProfileData(form)
@@ -65,7 +72,10 @@ export default function Profile() {
             <Field label="Nome completo"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
             <Field label="E-mail"><input value={user?.email ?? ''} disabled className="bg-surface-2" /></Field>
             <Field label="Telefone"><input type="tel" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
-            <Field label="Endereço"><input required value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field>
+            {typeof profile?.address === 'string' && profile.address && (
+              <p className="rounded-xl bg-gold-400/10 px-3 py-2 text-xs text-gold-300">Endereço anterior: {formatAddress(profile.address)}. Informe o CEP para atualizar.</p>
+            )}
+            <AddressForm value={form.address} onChange={(address) => setForm((f) => ({ ...f, address }))} />
             <ErrorText>{error}</ErrorText>
             <Button type="submit" className="w-full" disabled={busy}>Salvar</Button>
           </form>

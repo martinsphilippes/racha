@@ -33,6 +33,7 @@ export type MatchStatus = 'open' | 'confirmed' | 'cancelled' | 'finished'
 export type AvailabilityStatus = 'available' | 'unavailable'
 
 import type { PlatformRole } from './platform'
+import type { Address } from './cep'
 
 // directory/{uid} — visível a todos os usuários autenticados (para o organizador montar o grupo)
 // e onde o dono define o papel de plataforma. Dados privados ficam em users/{uid}.
@@ -51,7 +52,7 @@ export interface UserProfile {
   name: string
   email: string
   phone: string
-  address: string
+  address: Address | string // estruturado (CEP, rua, número…); string apenas em perfis antigos
   createdAt: number
 }
 

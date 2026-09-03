@@ -12,12 +12,13 @@ import { auth, db } from '@/lib/firebase'
 import type { DirectoryEntry, UserProfile } from '@/lib/types'
 import { isOwnerEmail, type PlatformRole } from '@/lib/platform'
 import { ensureDirectoryEntry } from '@/lib/repo'
+import type { Address } from '@/lib/cep'
 
 interface SignupInput {
   name: string
   email: string
   phone: string
-  address: string
+  address: Address
   password: string
 }
 
@@ -32,7 +33,7 @@ interface AuthContextValue {
   signup: (input: SignupInput) => Promise<void>
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
-  updateProfileData: (data: Pick<UserProfile, 'name' | 'phone' | 'address'>) => Promise<void>
+  updateProfileData: (data: { name: string; phone: string; address: Address }) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -102,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: input.name.trim(),
       email: input.email.trim().toLowerCase(),
       phone: input.phone.trim(),
-      address: input.address.trim(),
+      address: cleanAddress(input.address),
       createdAt: Date.now(),
     })
     await ensureDirectoryEntry(
@@ -119,9 +120,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOut(auth)
   }
 
-  async function updateProfileData(data: Pick<UserProfile, 'name' | 'phone' | 'address'>) {
+  async function updateProfileData(data: { name: string; phone: string; address: Address }) {
     if (!user) return
-    await updateDoc(doc(db, 'users', user.uid), data)
+    await updateDoc(doc(db, 'users', user.uid), { name: data.name, phone: data.phone, address: cleanAddress(data.address) })
     await updateProfile(user, { displayName: data.name })
     await updateDoc(doc(db, 'directory', user.uid), { name: data.name }).catch(() => undefined)
   }
@@ -142,6 +143,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   )
+}
+
+function cleanAddress(a: Address): Address {
+  return {
+    cep: a.cep.replace(/\D/g, ''), street: a.street.trim(), number: a.number.trim(), complement: a.complement.trim(),
+    district: a.district.trim(), city: a.city.trim(), state: a.state.trim().toUpperCase(),
+  }
 }
 
 export function useAuth(): AuthContextValue {
