@@ -121,7 +121,7 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await m.getByLabel('Dia da semana').selectOption(String(tomorrow.getDay()))
   await m.getByLabel('Início').fill('19:30')
   await m.getByLabel('Duração (min)').fill('90')
-  await m.getByRole('button', { name: 'Salvar e gerar' }).click()
+  await m.getByRole('button', { name: 'Salvar e gerar partidas' }).click()
   await expect(m.getByText('4 partidas geradas')).toBeVisible()
 
   // ----- Organizador joga e adiciona o atleta pelo diretório -----

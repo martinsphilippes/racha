@@ -5,7 +5,7 @@ import { useCourts, useSchedules, useVenues } from '@/hooks/useGroupData'
 import { ensureUpcomingMatches, saveSchedule, setScheduleActive } from '@/lib/repo'
 import { formatDuration, formatMoney, formatTimeRange, WEEKDAYS } from '@/lib/format'
 import type { Schedule } from '@/lib/types'
-import { Button, Card, EmptyState, Field, LinkButton, PageHeader, Pill, Spinner } from '@/components/ui'
+import { Button, Card, EmptyState, Field, LinkButton, PageHeader, Pill, Spinner, Stat } from '@/components/ui'
 import { errorMessage, useToast } from '@/components/Toast'
 import NumberInput from '@/components/NumberInput'
 
@@ -44,22 +44,26 @@ export default function SchedulePage() {
         const venue = venues.find((v) => v.id === s.venueId)
         const court = courts.find((c) => c.id === s.courtId)
         return (
-          <Card key={s.id} className="space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="text-lg font-extrabold">Toda {WEEKDAYS[s.weekday].toLowerCase()}</div>
-                <div className="text-sm text-slate-200">{formatTimeRange(s.startTime, s.durationMinutes)} · {formatDuration(s.durationMinutes)}</div>
-                <div className="text-sm text-muted">{venue?.name ?? '—'}{court ? ` · ${court.name}` : ''}</div>
-                {court && <div className="text-xs text-muted">{formatMoney(court.hourlyRate)}/h → {formatMoney((court.hourlyRate * s.durationMinutes) / 60)} por partida</div>}
+          <Card key={s.id} className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-lg font-extrabold leading-tight">Toda {WEEKDAYS[s.weekday].toLowerCase()}</div>
+                <div className="text-sm font-semibold text-sky-glow">{formatTimeRange(s.startTime, s.durationMinutes)} · {formatDuration(s.durationMinutes)}</div>
               </div>
-              <Pill tone={s.active ? 'green' : 'neutral'}>{s.active ? 'Ativa' : 'Pausada'}</Pill>
+              <Pill tone={s.active ? 'green' : 'neutral'} className="shrink-0">{s.active ? 'Ativa' : 'Pausada'}</Pill>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Button size="sm" variant="outline" onClick={() => setEditing(s)}>Editar</Button>
-              <Button size="sm" variant="outline" onClick={() => toggle(s)}>{s.active ? 'Pausar' : 'Reativar'}</Button>
-              <Button size="sm" variant="secondary" onClick={() => generate(s)} disabled={!s.active}>Gerar partidas</Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Stat label="Local" value={<span className="text-base">{venue?.name ?? '—'}</span>} />
+              <Stat label="Quadra" value={<span className="text-base">{court?.name ?? '—'}</span>} />
+              <Stat label="Valor da quadra" value={court ? `${formatMoney(court.hourlyRate)}/h` : '—'} />
+              <Stat label="Custo por partida" value={court ? formatMoney((court.hourlyRate * s.durationMinutes) / 60) : '—'} tone="amber" />
             </div>
-            <p className="text-xs text-muted">Mantém as próximas {s.weeksAhead} semanas geradas automaticamente. Cada data é uma partida independente.</p>
+            <Button className="w-full" onClick={() => generate(s)} disabled={!s.active}>⚽ Gerar próximas partidas</Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" onClick={() => setEditing(s)}>Editar</Button>
+              <Button variant="outline" onClick={() => toggle(s)}>{s.active ? 'Pausar' : 'Reativar'}</Button>
+            </div>
+            <p className="text-xs text-muted">As próximas {s.weeksAhead} semanas ficam geradas automaticamente. Cada data é uma partida independente.</p>
           </Card>
         )
       })}
@@ -125,9 +129,9 @@ function ScheduleForm({ schedule, onClose }: { schedule: Partial<Schedule>; onCl
           </select>
         </Field>
         <Field label="Semanas geradas à frente"><NumberInput required value={form.weeksAhead} onChange={(v) => setForm({ ...form, weeksAhead: v })} /></Field>
-        <div className="grid grid-cols-2 gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" disabled={busy || !courtId}>Salvar e gerar</Button>
+        <div className="space-y-2 pt-1">
+          <Button type="submit" className="w-full" disabled={busy || !courtId}>{busy ? 'Salvando…' : 'Salvar e gerar partidas'}</Button>
+          <Button type="button" variant="ghost" className="w-full" onClick={onClose}>Cancelar</Button>
         </div>
       </form>
     </Card>
