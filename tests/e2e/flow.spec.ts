@@ -73,12 +73,18 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await m.getByRole('button', { name: 'CRIAR GRUPO' }).click()
   await expect(m).toHaveURL(/\/manage\/venues/)
 
-  // ----- Local e quadra -----
+  // ----- Local e quadra (busca de endereço simulada: o geocodificador externo é substituído) -----
+  await m.route('https://photon.komoot.io/**', (route) => route.fulfill({
+    json: { features: [{ geometry: { coordinates: [-49.4646, -18.9742] }, properties: { name: 'Arena Ituiutaba', osm_key: 'leisure', street: 'Avenida Central', housenumber: '100', district: 'Centro', city: 'Ituiutaba', state: 'Minas Gerais' } }] },
+  }))
   await m.getByRole('button', { name: 'Cadastrar local' }).click()
   await m.getByLabel('Nome do local').fill('Arena Ituiutaba')
-  await m.getByLabel('Endereço').fill('Av. Central, 100')
+  await m.getByLabel('Endereço').fill('Arena Ituiu')
+  await m.getByRole('option').first().click()
+  await expect(m.getByLabel('Endereço')).toHaveValue('Arena Ituiutaba, Avenida Central, 100 - Centro, Ituiutaba - MG')
+  await expect(m.getByText('Localização marcada no mapa')).toBeVisible()
   await m.getByRole('button', { name: 'Salvar' }).click()
-  await expect(m.getByText('Arena Ituiutaba')).toBeVisible()
+  await expect(m.getByText('📍 Arena Ituiutaba, Avenida Central, 100')).toBeVisible()
   await m.getByRole('button', { name: '+ Quadra' }).click()
   await m.getByLabel('Nome da quadra').fill('Futsal 1')
   await m.getByLabel('Valor por hora (R$)').fill('200')
@@ -108,6 +114,9 @@ test('dono → organizador → grupo → atleta → disponibilidade → rateio �
   await expect(a.getByText('Futsal de terça')).toBeVisible()
   await expect(a.getByText('Você vai jogar?')).toBeVisible()
   await expect(a.getByRole('link', { name: 'Gestão' })).toHaveCount(0)
+  // Como chegar: links com as coordenadas do local escolhido
+  await expect(a.getByRole('link', { name: /Como chegar/ })).toHaveAttribute('href', 'https://www.google.com/maps/dir/?api=1&destination=-18.9742,-49.4646')
+  await expect(a.getByRole('link', { name: /Waze/ })).toHaveAttribute('href', 'https://waze.com/ul?ll=-18.9742,-49.4646&navigate=yes')
   await a.goto('/manage')
   await expect(a).toHaveURL(/\/$/)
 

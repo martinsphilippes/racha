@@ -93,6 +93,8 @@ export interface Venue {
   id: string
   name: string
   address: string
+  lat: number | null // coordenadas escolhidas na busca de endereço (para "Como chegar")
+  lng: number | null
   notes: string
   createdAt: number
 }
@@ -143,6 +145,8 @@ export interface Match {
   venueName: string
   courtName: string
   address: string
+  lat: number | null
+  lng: number | null
   hourlyRate: number
   costOverride: number | null // custo manual definido pelo gestor
   minPlayers: number

@@ -111,7 +111,10 @@ export async function removeMember(gid: string, uid: string): Promise<void> {
 
 export async function saveVenue(gid: string, venue: Partial<Venue> & Pick<Venue, 'name' | 'address' | 'notes'>): Promise<string> {
   const id = venue.id ?? newId()
-  await setDoc(venueRef(gid, id), { name: venue.name.trim(), address: venue.address.trim(), notes: venue.notes.trim(), createdAt: venue.createdAt ?? Date.now() })
+  await setDoc(venueRef(gid, id), {
+    name: venue.name.trim(), address: venue.address.trim(), lat: venue.lat ?? null, lng: venue.lng ?? null,
+    notes: venue.notes.trim(), createdAt: venue.createdAt ?? Date.now(),
+  })
   return id
 }
 
@@ -166,6 +169,8 @@ function matchSnapshot(group: Group, venue: Venue | undefined, court: Court | un
     venueName: venue?.name ?? '',
     courtName: court?.name ?? '',
     address: venue?.address ?? '',
+    lat: venue?.lat ?? null,
+    lng: venue?.lng ?? null,
     hourlyRate: court?.hourlyRate ?? 0,
   }
 }

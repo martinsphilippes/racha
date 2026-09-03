@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { formatDateLong, formatDateTime, formatMoney, formatTimeRange, shortName } from '@/lib/format'
 import { computeSplit, effectiveStatus, isMatchOpen, MATCH_STATUS_LABEL, minPlayersMessage } from '@/lib/matches'
 import { buildPixPayload, formatPixKey, pixKeyForPayload } from '@/lib/pix'
+import { googleMapsUrl, wazeUrl } from '@/lib/geocode'
 import { setAvailability, setPaid } from '@/lib/repo'
 import { copyText } from '@/lib/clipboard'
 import { POSITIONS, POSITIONS_BY_SPORT, type Announcement, type Group, type Match, type MatchPlayer, type MatchStatus, type Member, type Position } from '@/lib/types'
@@ -63,17 +64,33 @@ function MatchHeader({ group, match, status, availableCount }: { group: Group; m
         {match.venueName || 'Local a definir'}
         {match.courtName && <span> · {match.courtName}</span>}
       </div>
-      {match.address && (
-        <a className="mt-0.5 block text-xs text-muted/70 underline-offset-2 hover:underline" href={`https://maps.google.com/?q=${encodeURIComponent(match.address)}`} target="_blank" rel="noreferrer">
-          {match.address}
-        </a>
-      )}
+      {match.address && <div className="mt-0.5 text-xs text-muted">{match.address}</div>}
+      <DirectionsButtons match={match} />
       {(status === 'open' || status === 'confirmed') && (
         <div className="mt-3 rounded-xl bg-surface/10 px-3 py-2 text-sm font-semibold">
           {minPlayersMessage(availableCount, match.minPlayers)}
         </div>
       )}
     </Card>
+  )
+}
+
+function DirectionsButtons({ match }: { match: Match }) {
+  const dest = { lat: match.lat ?? null, lng: match.lng ?? null, address: match.address, name: match.venueName }
+  const maps = googleMapsUrl(dest)
+  const waze = wazeUrl(dest)
+  if (!maps) return null
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-2">
+      <a href={maps} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm font-bold text-white ring-1 ring-white/15 hover:bg-white/15">
+        🗺️ Como chegar
+      </a>
+      {waze && (
+        <a href={waze} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-sky-glow/15 px-3 py-2.5 text-sm font-bold text-sky-glow ring-1 ring-sky-glow/30 hover:bg-sky-glow/25">
+          🚗 Waze
+        </a>
+      )}
+    </div>
   )
 }
 

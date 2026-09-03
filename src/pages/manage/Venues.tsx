@@ -6,6 +6,7 @@ import { formatMoney } from '@/lib/format'
 import { SPORTS, type Court, type Sport, type Venue } from '@/lib/types'
 import { Button, Card, EmptyState, Field, PageHeader, Pill, SectionTitle, Spinner } from '@/components/ui'
 import { errorMessage, useToast } from '@/components/Toast'
+import AddressInput from '@/components/AddressInput'
 import NumberInput from '@/components/NumberInput'
 
 export default function Venues() {
@@ -42,7 +43,7 @@ export default function Venues() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="text-lg font-extrabold">{v.name}</div>
-                {v.address && <div className="text-sm text-muted">{v.address}</div>}
+                {v.address && <div className="text-sm text-muted">{v.lat != null ? '📍 ' : ''}{v.address}</div>}
                 {v.notes && <div className="text-xs text-muted">{v.notes}</div>}
               </div>
               <div className="flex gap-1">
@@ -77,18 +78,26 @@ export default function Venues() {
 
 function VenueForm({ groupId, venue, onClose }: { groupId: string; venue: Partial<Venue>; onClose: () => void }) {
   const toast = useToast()
-  const [form, setForm] = useState({ name: venue.name ?? '', address: venue.address ?? '', notes: venue.notes ?? '' })
+  const [form, setForm] = useState({
+    name: venue.name ?? '', address: venue.address ?? '', notes: venue.notes ?? '',
+    coords: venue.lat != null && venue.lng != null ? { lat: venue.lat, lng: venue.lng } : null as { lat: number; lng: number } | null,
+  })
   const [busy, setBusy] = useState(false)
   async function submit(e: FormEvent) {
     e.preventDefault(); setBusy(true)
-    try { await saveVenue(groupId, { ...venue, ...form }); toast('Local salvo'); onClose() } catch (err) { toast(errorMessage(err), 'error') } finally { setBusy(false) }
+    try {
+      await saveVenue(groupId, { ...venue, name: form.name, address: form.address, notes: form.notes, lat: form.coords?.lat ?? null, lng: form.coords?.lng ?? null })
+      toast('Local salvo'); onClose()
+    } catch (err) { toast(errorMessage(err), 'error') } finally { setBusy(false) }
   }
   return (
     <Card className="border-2 border-flame-500">
       <form onSubmit={submit} className="space-y-3">
         <h3 className="font-bold">{venue.id ? 'Editar local' : 'Novo local'}</h3>
         <Field label="Nome do local"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex.: Arena Ituiutaba" /></Field>
-        <Field label="Endereço"><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field>
+        <Field label="Endereço" hint="Busque pelo nome da arena ou pela rua e escolha a sugestão: os atletas ganham o botão Como chegar.">
+          <AddressInput value={form.address} coords={form.coords} onChange={(address, coords) => setForm({ ...form, address, coords })} />
+        </Field>
         <Field label="Observações"><input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
